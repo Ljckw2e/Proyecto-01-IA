@@ -1,420 +1,393 @@
-/**
- * FrozenLakeViz.jsx
- * =================
- * Componente React que consume la API Python y visualiza paso a paso
- * la ejecución de BFS o DFS sobre el Frozen Lake dinámico.
- */
+import { useState, useEffect, useRef } from "react";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+const API_URL = "http://127.0.0.1:8000";
 
-// ──────────────────────────────────────────────
-// Constantes y helpers
-// ──────────────────────────────────────────────
-
-const API_URL = "http://127.0.0.1:8000"; 
-
-/** Apariencia de cada tipo de celda en estado neutro */
-const CELL_BASE = {
-  S: { bg: "#1D9E75", label: "S",  text: "#fff" },
-  G: { bg: "#EF9F27", label: "G",  text: "#412402" },
-  H: { bg: "#185FA5", label: "✕",  text: "#fff" },
-  F: { bg: "#DDE9F6", label: "",   text: "#185FA5" },
-};
-
-/** Colores de estado durante la búsqueda */
+// Colores unificados para los estados de búsqueda
 const STATE_COLOR = {
-  current:  "#D85A30",  // nodo que se está expandiendo ahora
-  path:     "#5DCAA5",  // celdas del camino solución
-  frontier: "#AFA9EC",  // en la cola/pila
-  visited:  "#CECBF6",  // ya explorado
+  current:  "#D85A30",  // Naranja para el nodo expandiéndose ahora
+  path:     "#4CAF50",  // Verde para el camino óptimo final
+  frontier: "#AFA9EC",  // Morado para los nodos en la cola (Frontera)
+  visited:  "#CECBF6",  // Azul/Violeta para los ya explorados
 };
-
-/**
- * Decide el color de fondo de una celda dada la información del paso actual.
- */
-function cellBg(cellType, pos, step) {
-  if (!step) return CELL_BASE[cellType]?.bg ?? CELL_BASE.F.bg;
-
-  const { current, visited = [], frontier = [], solution_path } = step;
-
-  if (solution_path?.includes(pos)) return STATE_COLOR.path;
-  if (pos === current)               return STATE_COLOR.current;
-  if (frontier.includes(pos))        return STATE_COLOR.frontier;
-  if (visited.includes(pos))         return STATE_COLOR.visited;
-
-  return CELL_BASE[cellType]?.bg ?? CELL_BASE.F.bg;
-}
-
-const S = {
-  card: {
-    background: "#fff",
-    border: "1px solid #E0DED6",
-    borderRadius: 10,
-    padding: "14px 16px",
-  },
-  btn: (active = false, primary = false) => ({
-    padding: "8px 18px",
-    borderRadius: 8,
-    border: primary ? "none" : "1px solid #D0CEC6",
-    background: primary ? "#534AB7" : active ? "#EEEDFE" : "transparent",
-    color:  primary ? "#fff" : active ? "#534AB7" : "#444",
-    fontWeight: active || primary ? 600 : 400,
-    fontSize: 13,
-    cursor: "pointer",
-    transition: "opacity .15s",
-  }),
-  label: { fontSize: 11, color: "#888", marginBottom: 4, fontWeight: 500, letterSpacing: ".04em", textTransform: "uppercase" },
-  statVal: { fontSize: 22, fontWeight: 600, color: "#2C2C2A" },
-};
-
-// ──────────────────────────────────────────────
-// Componente principal
-// ──────────────────────────────────────────────
 
 export default function FrozenLakeViz() {
-  const [algorithm, setAlgorithm]   = useState("bfs");
-  const [rows, setRows]             = useState(4);
-  const [cols, setCols]             = useState(4);
-  const [isEditing, setIsEditing]   = useState(true); 
-  const [gridMap, setGridMap]       = useState([
+  const [algorithm, setAlgorithm] = useState("bfs");
+  const [rows, setRows] = useState(4);
+  const [cols, setCols] = useState(4);
+  const [isEditing, setIsEditing] = useState(true);
+  const [editTool, setEditTool] = useState("H"); 
+
+  const [gridMap, setGridMap] = useState([
     ['S', 'F', 'F', 'F'],
-    ['F', 'F', 'F', 'F'],
-    ['F', 'F', 'F', 'F'],
-    ['F', 'F', 'F', 'G']
+    ['F', 'H', 'F', 'H'],
+    ['F', 'F', 'F', 'H'],
+    ['H', 'F', 'F', 'G']
   ]);
-  
-  const [data, setData]             = useState(null);
-  const [stepIdx, setStepIdx]       = useState(-1);
-  const [running, setRunning]       = useState(false);
-  const [speed, setSpeed]           = useState(600);
-  const [error, setError]           = useState("");
-  const [loading, setLoading]       = useState(false);
+
+  const [data, setData] = useState(null);
+  const [stepIdx, setStepIdx] = useState(-1);
+  const [running, setRunning] = useState(false);
+  const [speed, setSpeed] = useState(400);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const intervalRef = useRef(null);
-  const logRef      = useRef(null);
+  // ✨ Referencia para el auto-scroll vertical del contenedor de la tabla
+  const tableContainerRef = useRef(null); 
+  const totalSteps = data?.steps?.length ?? 0;
 
-  const currentStep = data?.steps[stepIdx] ?? null;
-  const totalSteps  = data?.steps?.length   ?? 0;
-
-  // ── Fetch pasos desde la API Corregido ──────────────────────────────────
-  const fetchSteps = useCallback(async (algo, mapaActual) => {
-    setLoading(true);
-    setError("");
-    try {
-      // ✨ Corregido: Ahora llama a fetch nativo y apunta a la URL correcta
-      const res = await fetch(`${API_URL}/api/search`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          algorithm: algo,
-          rows: rows,
-          cols: cols,
-          grid: mapaActual
-        })
-      });
-
-      if (!res.ok) {
-        const errDetail = await res.json().catch(() => ({}));
-        console.error("Error devuelto por FastAPI:", errDetail);
-        throw new Error(`HTTP ${res.status}`);
-      }
-
-      const json = await res.json();
-      setData(json);
-      setStepIdx(-1);
-      return json; // Retorna el json para sincronizar la animación
-    } catch (e) {
-      console.error("Detalle del error en petición:", e);
-      setError("Error conectando con el servidor Python o mapa sin solución.");
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, [rows, cols]);
-
-  // Regenerar el mapa limpio al cambiar dimensiones
   useEffect(() => {
-    const nuevoMapa = Array(rows).fill(null).map((_, r) => 
+    const nuevoMapa = Array(rows).fill(null).map((_, r) =>
       Array(cols).fill(null).map((_, c) => {
-        if (r === 0 && c === 0) return 'S'; 
-        if (r === rows - 1 && c === cols - 1) return 'G'; 
-        return 'F'; 
+        if (r === 0 && c === 0) return 'S';
+        if (r === rows - 1 && c === cols - 1) return 'G';
+        return 'F';
       })
     );
     setGridMap(nuevoMapa);
-    handleReset();
+    setStepIdx(-1);
     setData(null);
   }, [rows, cols]);
 
-  // Auto-scroll del log
   useEffect(() => {
-    if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
-  }, [stepIdx]);
-
-  // ── Animación automática ─────────────────────────────────────────────────
-  useEffect(() => {
-    if (!running || totalSteps <= 0) {
-      clearInterval(intervalRef.current);
-      return;
+    if (!running || totalSteps <= 0) { 
+      clearInterval(intervalRef.current); 
+      return; 
     }
-
     intervalRef.current = setInterval(() => {
       setStepIdx((prev) => {
-        if (prev >= totalSteps - 1) {
-          setRunning(false);
-          return prev;
+        if (prev >= totalSteps - 1) { 
+          setRunning(false); 
+          return prev; 
         }
         return prev + 1;
       });
     }, speed);
-
     return () => clearInterval(intervalRef.current);
   }, [running, speed, totalSteps]);
 
-  // ── Controles Corregidos con Async/Await ─────────────────────────────────
+  // ✨ Auto-scroll vertical automático para la tabla cuando avanza la animación
+  useEffect(() => {
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollTop = tableContainerRef.current.scrollHeight;
+    }
+  }, [stepIdx]);
+
   const handleRun = async () => {
     if (isEditing) {
       setIsEditing(false);
-      // Esperamos la respuesta real de Python antes de lanzar la animación
-      const resultado = await fetchSteps(algorithm, gridMap);
-      if (resultado && resultado.steps && resultado.steps.length > 0) {
-        setRunning(true);
+      setLoading(true);
+      setError("");
+      try {
+        const res = await fetch(`${API_URL}/api/search`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ algorithm, rows, cols, grid: gridMap })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        setData(json);
+        setStepIdx(0);
+        if (json?.steps?.length > 0) setRunning(true);
+      } catch (e) {
+        setError("Error: Revisa la conexión con el servidor Python.");
+        setIsEditing(true);
+      } finally { 
+        setLoading(false);
       }
     } else {
-      if (stepIdx >= totalSteps - 1) setStepIdx(-1);
+      if (stepIdx >= totalSteps - 1) setStepIdx(0);
       setRunning(true);
     }
   };
 
-  const handlePause = () => setRunning(false);
-
-  const handleStep = () => {
-    setRunning(false);
-    setStepIdx((prev) => Math.min(prev + 1, totalSteps - 1));
-  };
-
-  const handleReset = () => {
-    setRunning(false);
-    clearInterval(intervalRef.current);
-    setStepIdx(-1);
-  };
-
-  const handleAlgo = (algo) => {
-    if (algo === algorithm) return;
-    handleReset();
-    setAlgorithm(algo);
-  };
+  const currentStep = data?.steps[stepIdx] ?? null;
 
   return (
-    <div style={{ display: "flex", gap: 24, maxWidth: 900, flexWrap: "wrap" }}>
+    <div style={{ 
+      display: "flex", 
+      flexDirection: "column", // ✨ Contenedor principal en formato vertical (fila arriba, tabla abajo)
+      gap: "24px", 
+      width: "100%",
+      maxWidth: "1400px", 
+      margin: "0 auto",
+      boxSizing: "border-box"
+    }}>
 
-      {/* ══ COLUMNA IZQUIERDA: cuadrícula + controles ══ */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
-        {/* Selector de algoritmo */}
-        <div style={{ display: "flex", gap: 8 }}>
-          {["bfs", "dfs"].map((algo) => (
-            <button key={algo} style={S.btn(algorithm === algo)} onClick={() => handleAlgo(algo)}>
-              {algo.toUpperCase()}
-            </button>
-          ))}
-        </div>
-
-        {/* Cuadrícula Dinámica */}
-        <div style={{ display: "flex",
+      {/* 🏙️ SECCIÓN SUPERIOR: CONFIGURACIÓN + TABLERO INTERACTIVO */}
+      <div style={{ display: "flex", gap: "30px", width: "100%", alignItems: "flex-start" }}>
+        
+        {/* 📋 COLUMNA 1: CONFIGURACIÓN */}
+        <div style={{ 
+          width: "300px", 
+          background: "#ffffff", 
+          padding: "24px", 
+          borderRadius: "16px", 
+          boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+          display: "flex",
           flexDirection: "column",
-          gap: 12
-          }}>
-  
-          {/* Controles de tamaño del tablero */}
-          <div style={{ display: "flex", gap: 16, alignItems: "center", fontSize: 13 }}>
-            <label>Filas: <input type="number" min="3" max="10" value={rows} onChange={(e) => setRows(Number(e.target.value))} style={{ width: 50, padding: 4 }} disabled={!isEditing} /></label>
-            <label>Columnas: <input type="number" min="3" max="10" value={cols} onChange={(e) => setCols(Number(e.target.value))} style={{ width: 50, padding: 4 }} disabled={!isEditing} /></label>
-            <button style={S.btn(isEditing)} onClick={() => { handleReset(); setIsEditing(true); setData(null); }}> Diseña el laberinto</button>
+          gap: "20px"
+        }}>
+          
+          {/* Selector de Algoritmo */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.5px" }}>ALGORITMO DE BÚSQUEDA</span>
+            <div style={{ display: "flex", gap: "6px" }}>
+              {["bfs", "dfs"].map((algo) => (
+                <button 
+                  key={algo}
+                  onClick={() => { if (isEditing) setAlgorithm(algo); }}
+                  style={{ 
+                    flex: 1, padding: "10px", borderRadius: "8px", border: "none", fontWeight: "bold", 
+                    cursor: isEditing ? "pointer" : "not-allowed",
+                    background: algorithm === algo ? "#534AB7" : "#f1f5f9",
+                    color: algorithm === algo ? "#fff" : "#64748b",
+                    opacity: !isEditing && algorithm !== algo ? 0.5 : 1,
+                    transition: "all 0.2s"
+                  }}
+                >
+                  {algo.toUpperCase()}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Renderizado de la matriz */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${cols}, 80px)`,
-            gap: 5,
+          <h3 style={{ margin: "10px 0 0 0", color: "#1e293b", fontSize: "18px", borderBottom: "2px solid #f1f5f9", paddingBottom: "10px" }}>
+            Configuración del tablero
+          </h3>
+
+          {/* Dimensiones */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.5px" }}>DIMENSIONES</span>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <label style={{ fontSize: "13px", color: "#1e293b", flex: 1 }}>Filas: <input type="number" min="3" max="8" value={rows} onChange={(e) => setRows(Number(e.target.value))} style={{ width: "100%", padding: "8px", marginTop: "4px", borderRadius: "6px", border: "1px solid #cbd5e1" }} disabled={!isEditing} /></label>
+              <label style={{ fontSize: "13px", color: "#1e293b", flex: 1 }}>Columnas: <input type="number" min="3" max="8" value={cols} onChange={(e) => setCols(Number(e.target.value))} style={{ width: "100%", padding: "8px", marginTop: "4px", borderRadius: "6px", border: "1px solid #cbd5e1" }} disabled={!isEditing} /></label>
+            </div>
+          </div>
+
+          {/* Brochas de Diseño */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", borderTop: "1px solid #f1f5f9", paddingTop: "14px" }}>
+            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.5px" }}>HERRAMIENTA DE DISEÑO</span>
+            <div style={{ display: "flex", gap: "6px" }}>
+              {[
+                { id: "H", label: "Hoyo (H)", color: "#2196F3" },
+                { id: "S", label: "Inicio (S)", color: "#4CAF50" },
+                { id: "G", label: "Meta (G)", color: "#FF9800" }
+              ].map((tool) => (
+                <button
+                  key={tool.id}
+                  onClick={() => setEditTool(tool.id)}
+                  disabled={!isEditing}
+                  style={{
+                    flex: 1, padding: "8px 4px", borderRadius: "8px", border: "none", fontSize: "12px", fontWeight: "bold", 
+                    cursor: isEditing ? "pointer" : "not-allowed",
+                    background: editTool === tool.id ? tool.color : "#f1f5f9",
+                    color: editTool === tool.id ? "#fff" : "#64748b",
+                    transition: "all 0.15s"
+                  }}
+                >
+                  {tool.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button 
+            onClick={() => { setIsEditing(true); setData(null); setStepIdx(-1); setRunning(false); }} 
+            style={{ padding: "10px", background: isEditing ? "#EEEDFE" : "#fff", color: "#534AB7", border: "1px solid #C4C0F0", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}
+          >
+            {isEditing ? "Modo: Diseñando" : "Volver a Diseñar"}
+          </button>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", borderTop: "1px solid #f1f5f9", paddingTop: "16px" }}>
+            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b" }}>LEYENDA DE EJECUCIÓN</span>
+            {[
+              [STATE_COLOR.current, "Posición del Agente"],
+              [STATE_COLOR.frontier, "Frontera (Cola/Pila)"],
+              [STATE_COLOR.visited, "Casilla Analizada"],
+              [STATE_COLOR.path, "Camino Solución"],
+            ].map(([color, label]) => (
+              <div key={label} style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: "#334155" }}>
+                <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: color, border: "1px solid #e2e8f0" }} />
+                {label}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 🎮 COLUMNA 2: TABLERO CENTRAL (Se expande horizontalmente al máximo) */}
+        <div style={{ 
+          flex: "1", 
+          background: "#ffffff",
+          padding: "24px",
+          borderRadius: "16px",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+          display: "flex", 
+          flexDirection: "column", 
+          alignItems: "center", 
+          justifyContent: "flex-start",
+          gap: "24px" 
+        }}>
+          {error && <div style={{ background: "#FEF2F2", color: "#991B1B", padding: "12px", borderRadius: "8px", fontSize: "13px" }}>⚠ {error}</div>}
+
+          <div style={{ 
+            display: "grid", 
+            gridTemplateColumns: `repeat(${cols}, 75px)`, 
+            gap: "8px", 
+            background: "#cbd5e1", 
+            padding: "12px", 
+            borderRadius: "14px"
           }}>
             {gridMap.flat().map((cell, pos) => {
-              const row = Math.floor(pos / cols), col = pos % cols;
-              const base = CELL_BASE[cell] ?? CELL_BASE.F;
-              const bg   = cellBg(cell, pos, currentStep);
-              const isCurrent = currentStep?.current === pos;
-              const isPath    = currentStep?.solution_path?.includes(pos);
+              const r = Math.floor(pos / cols);
+              const c = pos % cols;
+              
+              let cellBg = "#f1f5f9"; 
+              let cellText = "";
+
+              if (cell === 'S') { cellBg = "#4CAF50"; cellText = "S"; }
+              else if (cell === 'G') { cellBg = "#FF9800"; cellText = "G"; }
+              else if (cell === 'H') { cellBg = "#2196F3"; cellText = "✕"; }
+
+              if (currentStep) {
+                if (currentStep.solution_path && currentStep.solution_path.includes(pos)) {
+                  cellBg = STATE_COLOR.path; 
+                  cellText = cell === 'G' ? "G" : "✔";
+                } else if (currentStep.current === pos) {
+                  cellBg = STATE_COLOR.current; 
+                  cellText = <img src="/hacker.png" alt="Hacker" style={{ width: "45px", height: "45px", objectFit: "contain" }} />;
+                } else if (currentStep.frontier && currentStep.frontier.includes(pos)) {
+                  cellBg = STATE_COLOR.frontier;
+                } else if (currentStep.visited && currentStep.visited.includes(pos)) {
+                  cellBg = STATE_COLOR.visited;
+                }
+              }
 
               return (
                 <div
                   key={pos}
                   onClick={() => {
                     if (!isEditing) return;
-                    if (cell === 'S' || cell === 'G') return; 
-                    
-                    const nuevoMapa = [...gridMap.map(r => [...r])];
-                    nuevoMapa[row][col] = cell === 'F' ? 'H' : 'F';
+                    const nuevoMapa = [...gridMap.map(rowArr => [...rowArr])];
+                    const valorActual = nuevoMapa[r][c];
+
+                    if (editTool === "H") {
+                      if (valorActual === 'S' || valorActual === 'G') return;
+                      nuevoMapa[r][c] = valorActual === 'F' ? 'H' : 'F';
+                    } else if (editTool === "S") {
+                      if (valorActual === 'G') return;
+                      for (let i = 0; i < rows; i++) {
+                        for (let j = 0; j < cols; j++) { if (nuevoMapa[i][j] === 'S') nuevoMapa[i][j] = 'F'; }
+                      }
+                      nuevoMapa[r][c] = 'S';
+                    } else if (editTool === "G") {
+                      if (valorActual === 'S') return;
+                      for (let i = 0; i < rows; i++) {
+                        for (let j = 0; j < cols; j++) { if (nuevoMapa[i][j] === 'G') nuevoMapa[i][j] = 'F'; }
+                      }
+                      nuevoMapa[r][c] = 'G';
+                    }
                     setGridMap(nuevoMapa);
                   }}
                   style={{
-                    width: 80, height: 80,
-                    background: bg,
-                    borderRadius: 9,
-                    border: isCurrent ? "2.5px solid #D85A30" : isPath ? "2.5px solid #1D9E75" : "1px solid rgba(0,0,0,0.07)",
-                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    width: "75px", height: "75px", background: cellBg, display: "flex", 
+                    flexDirection: "column", justifyContent: "center", alignItems: "center", 
+                    borderRadius: "8px", fontWeight: "bold", fontSize: "16px",
                     cursor: isEditing ? "pointer" : "default",
-                    userSelect: "none",
-                    transform: isEditing && cell !== 'S' && cell !== 'G' ? "scale(0.98)" : "none"
+                    border: "1px solid rgba(0,0,0,0.05)", transition: "all 0.15s"
                   }}
                 >
-                  <span style={{ fontSize: 26, fontWeight: 700, color: base.text, lineHeight: 1 }}>
-                    {base.label}
-                  </span>
-                  <span style={{ fontSize: 10, color: "rgba(0,0,0,0.3)", marginTop: 4 }}>
-                    [{row},{col}]
-                  </span>
+                  <span>{cellText}</span>
+                  <span style={{ fontSize: "9px", opacity: 0.4, marginTop: "2px", color: "#000" }}>{`[${r},${c}]`}</span>
                 </div>
               );
             })}
           </div>
-        </div>
 
-        {/* Controles de reproducción */}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {!running
-            ? <button style={S.btn(false, true)} onClick={handleRun} disabled={loading}>▶ Ejecutar</button>
-            : <button style={S.btn(false, true)} onClick={handlePause}>⏸ Pausar</button>
-          }
-          <button style={S.btn()} onClick={handleStep}
-            disabled={running || !data || stepIdx >= totalSteps - 1}>
-            Paso →
-          </button>
-          <button style={S.btn()} onClick={handleReset}>↺ Reiniciar</button>
-        </div>
-
-        {/* Control de velocidad */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "#666" }}>
-          <span>Velocidad</span>
-          <input
-            type="range" min={100} max={1200} step={100}
-            value={1300 - speed}
-            onChange={(e) => setSpeed(1300 - Number(e.target.value))}
-            style={{ width: 100 }}
-          />
-          <span style={{ width: 44, color: "#333" }}>
-            {speed <= 300 ? "Rápido" : speed <= 700 ? "Normal" : "Lento"}
-          </span>
-        </div>
-
-        {/* Leyenda */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 14px" }}>
-          {[
-            ["#1D9E75", "Inicio (S)"],
-            ["#EF9F27", "Meta (G)"],
-            ["#185FA5", "Hoyo (H)"],
-            [STATE_COLOR.current,  "Expandiendo"],
-            [STATE_COLOR.visited,  "Visitado"],
-            [STATE_COLOR.frontier, "Frontera"],
-            [STATE_COLOR.path,     "Camino"],
-          ].map(([color, label]) => (
-            <div key={label} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#555" }}>
-              <div style={{ width: 12, height: 12, borderRadius: 3, background: color, border: "1px solid rgba(0,0,0,0.1)" }} />
-              {label}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ══ COLUMNA DERECHA: stats + info + log ══ */}
-      <div style={{ flex: 1, minWidth: 280, display: "flex", flexDirection: "column", gap: 14 }}>
-
-        {/* Error */}
-        {error && (
-          <div style={{ ...S.card, background: "#FEF2F2", borderColor: "#FCA5A5", color: "#991B1B", fontSize: 13, lineHeight: 1.6 }}>
-            ⚠ {error}
-          </div>
-        )}
-
-        {/* Stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-          {[
-            ["Paso",      stepIdx < 0 ? "—" : `${stepIdx + 1} / ${totalSteps}`],
-            ["Visitados", currentStep?.visited?.length ?? "—"],
-            ["Frontera",  currentStep?.frontier?.length ?? "—"],
-          ].map(([label, val]) => (
-            <div key={label} style={{ ...S.card, textAlign: "center" }}>
-              <div style={S.label}>{label}</div>
-              <div style={S.statVal}>{val}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Info del algoritmo */}
-        <div style={{ ...S.card, background: "#EEEDFE", borderColor: "#C4C0F0", fontSize: 13, lineHeight: 1.7, color: "#3C3489" }}>
-          {algorithm === "bfs" ? (
-            <>
-              <strong>BFS — Búsqueda en Anchura</strong><br />
-              Estructura: <em>Cola FIFO</em> (deque). Expande nivel a nivel.<br />
-              ✓ Completo · ✓ Óptimo (sin weights) · T: O(b<sup>d</sup>) · S: O(b<sup>d</sup>)
-            </>
-          ) : (
-            <>
-              <strong>DFS — Búsqueda en Profundidad</strong><br />
-              Estructura: <em>Pila LIFO</em>. Se hunde por una rama antes de retroceder.<br />
-              ✓ Completo (con visitados) · ✗ No óptimo · T: O(b<sup>m</sup>) · S: O(b·m)
-            </>
-          )}
-        </div>
-
-        {/* Log de pasos */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-          <div style={{ ...S.label, marginBottom: 6 }}>Log de pasos</div>
-          <div
-            ref={logRef}
-            style={{
-              height: 220,
-              overflowY: "auto",
-              ...S.card,
-              fontFamily: "ui-monospace, monospace",
-              fontSize: 12,
-              lineHeight: 1.9,
-              color: "#555",
-            }}
-          >
-            {stepIdx < 0 ? (
-              <span style={{ color: "#bbb" }}>Presiona "Ejecutar" para comenzar…</span>
+          {/* Un solo botón para Play/Pause */}
+          <div style={{ display: "flex", gap: "8px", background: "#1e293b", padding: "8px 16px", borderRadius: "30px" }}>
+            {running ? (
+              <button onClick={() => setRunning(false)} style={{ padding: "8px 18px", background: "#ef4444", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer" }}>⏸ Pausar</button>
             ) : (
-              data?.steps?.slice(0, stepIdx + 1).map((s, i) => (
-                <div
-                  key={i}
-                  style={{
-                    color:      i === stepIdx ? "#2C2C2A" : "#999",
-                    fontWeight: i === stepIdx ? 600 : 400,
-                  }}
-                >
-                  [{String(s.step).padStart(2, "0")}] {s.message}
-                </div>
-              ))
+              <button onClick={handleRun} disabled={loading} style={{ padding: "8px 18px", background: "#10b981", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer" }}>
+                {loading ? "Calculando..." : "▶ Ejecutar"}
+              </button>
             )}
+            <button onClick={() => { setRunning(false); setStepIdx(-1); }} style={{ padding: "8px 18px", background: "#64748b", color: "white", border: "none", borderRadius: "20px", cursor: "pointer" }}>↺ Reiniciar</button>
           </div>
         </div>
 
-        {/* Camino solución */}
-        {currentStep?.found && currentStep?.solution_path && (
-          <div style={{ ...S.card, background: "#E1F5EE", borderColor: "#9FE1CB", fontSize: 13, color: "#04342C", lineHeight: 1.8 }}>
-            <strong>✓ Solución encontrada</strong><br />
-            {currentStep.solution_path.map((n, i) => {
-              const r = Math.floor(n / cols), c = n % cols;
-              return (
-                <span key={i}>
-                  [{r},{c}]{i < currentStep.solution_path.length - 1 ? " → " : ""}
-                </span>
-              );
-            })}
-          </div>
-        )}
       </div>
+
+      {/* 🪵 📊 SECCIÓN INFERIOR: TABLA DE PASOS COMPLETA */}
+      <div style={{ 
+        width: "100%", 
+        background: "#ffffff", 
+        padding: "24px", 
+        borderRadius: "16px", 
+        boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "14px",
+        boxSizing: "border-box"
+      }}>
+        <h4 style={{ margin: "0", color: "#1e293b", fontSize: "14px", fontWeight: "700", letterSpacing: "0.5px" }}>
+          TABLA DE SEGUIMIENTO E INSPECCIÓN DE ESTADOS ({algorithm.toUpperCase()})
+        </h4>
+        
+        {/* Contenedor vertical de la tabla con altura fija para scroll */}
+        <div 
+          ref={tableContainerRef}
+          style={{ 
+            maxHeight: "260px", 
+            overflowY: "auto", 
+            borderRadius: "8px", 
+            border: "1px solid #e2e8f0" 
+          }}
+        >
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", fontFamily: "system-ui, sans-serif" }}>
+            <thead>
+              <tr style={{ background: "#f8fafc", borderBottom: "2px solid #e2e8f0", position: "sticky", top: 0, zIndex: 1 }}>
+                <th style={{ padding: "12px 16px", width: "100px", color: "#475569", fontWeight: "700" }}>Paso</th>
+                <th style={{ padding: "12px 16px", color: "#475569", fontWeight: "700" }}>Descripción del Estado Evaluado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stepIdx < 0 ? (
+                <tr>
+                  <td colSpan="2" style={{ padding: "20px", textAlgin: "center", color: "#94a3b8", fontStyle: "italic", textAlign: "center" }}>
+                    Aquí aparecerán los pasos de la ejecución una vez que inicies el algoritmo. Cada fila representa un estado evaluado, mostrando su posición en la secuencia y una breve descripción de lo que ocurre en ese paso.
+                  </td>
+                </tr>
+              ) : (
+                data?.steps?.slice(0, stepIdx + 1).map((s, i) => {
+                  const esUltimoPaso = i === stepIdx;
+                  return (
+                    <tr 
+                      key={i} 
+                      style={{ 
+                        borderBottom: "1px solid #f1f5f9",
+                        background: esUltimoPaso ? "#EEEDFE" : "transparent",
+                        color: esUltimoPaso ? "#534AB7" : "#334155",
+                        fontWeight: esUltimoPaso ? "600" : "400",
+                        transition: "all 0.15s"
+                      }}
+                    >
+                      <td style={{ padding: "12px 16px", fontFamily: "monospace" }}>
+                        #{String(s.step).padStart(2, "0")}
+                      </td>
+                      <td style={{ padding: "12px 16px" }}>
+                        {s.message}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   );
 }
