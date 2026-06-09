@@ -221,13 +221,16 @@ export default function FrozenLakeViz() {
         </div>
 
         {/* Cuadrícula Dinámica */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex",
+          flexDirection: "column",
+          gap: 12
+          }}>
   
           {/* Controles de tamaño del tablero */}
           <div style={{ display: "flex", gap: 16, alignItems: "center", fontSize: 13 }}>
             <label>Filas: <input type="number" min="3" max="10" value={rows} onChange={(e) => setRows(Number(e.target.value))} style={{ width: 50, padding: 4 }} disabled={!isEditing} /></label>
             <label>Columnas: <input type="number" min="3" max="10" value={cols} onChange={(e) => setCols(Number(e.target.value))} style={{ width: 50, padding: 4 }} disabled={!isEditing} /></label>
-            <button style={S.btn(isEditing)} onClick={() => { handleReset(); setIsEditing(true); setData(null); }}>✏️ Diseñar Laberinto</button>
+            <button style={S.btn(isEditing)} onClick={() => { handleReset(); setIsEditing(true); setData(null); }}> Diseña el laberinto</button>
           </div>
 
           {/* Renderizado de la matriz */}
