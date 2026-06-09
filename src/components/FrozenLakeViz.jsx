@@ -116,7 +116,7 @@ export default function FrozenLakeViz() {
         
         {/* ✨ NUEVO ACOMODO: El Selector de Algoritmo ahora está arriba del todo */}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <span style={{ fontSize: "18px", fontWeight: "700", color: "#326ab8", letterSpacing: "0.5px" }}>ALGORITMO DE BÚSQUEDA</span>
+          <span style={{ fontSize: "18px", fontWeight: "700", color: "#000000", letterSpacing: "0.5px" }}>Algoritmo de Búsqueda</span>
           <div style={{ display: "flex", gap: "6px" }}>
             {["bfs", "dfs"].map((algo) => (
               <button 
@@ -138,7 +138,7 @@ export default function FrozenLakeViz() {
         </div>
 
         <h3 style={{ margin: "10px 0 0 0", color: "#1e293b", fontSize: "18px", borderBottom: "2px solid #f1f5f9", paddingBottom: "10px" }}>
-          Configuración del tablero
+          Configuración del mapa
         </h3>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
