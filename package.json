@@ -6,10 +6,9 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "concurrently \"npm run astro\" \"npm run python-backend\" --names \"Astro,Python\" --prefix-colors \"cyan,magenta\"",
-    "build": "astro build",
-    "preview": "astro preview",
-    "astro": "astro"
+    "dev": "concurrently \"npm run astro-dev\" \"npm run python-backend\" --names \"Astro,Python\" --prefix-colors \"cyan,magenta\"",
+    "astro-dev": "astro dev",
+    "python-backend": "python -m uvicorn main:app --reload --port 8000"
   },
   "dependencies": {
     "@astrojs/react": "^5.0.7",
