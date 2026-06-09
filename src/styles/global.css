@@ -1,0 +1,49 @@
+/* global.css */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --color-bg:        #F7F6F2;
+  --color-surface:   #FFFFFF;
+  --color-border:    #E0DED6;
+  --color-text:      #2C2C2A;
+  --color-muted:     #888884;
+  --color-primary:   #534AB7;
+  --color-primary-l: #EEEDFE;
+  --color-success:   #1D9E75;
+  --color-success-l: #E1F5EE;
+  --color-warn:      #EF9F27;
+  --color-danger:    #D85A30;
+  --radius:          10px;
+  --shadow:          0 1px 4px rgba(0,0,0,0.08);
+}
+
+html, body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+header {
+  padding: 24px 32px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+header h1 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+header p {
+  font-size: 13px;
+  color: var(--color-muted);
+  margin-top: 4px;
+}
+
+main {
+  padding: 28px 32px;
+}

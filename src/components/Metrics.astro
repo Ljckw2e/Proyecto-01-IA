@@ -1,0 +1,24 @@
+---
+// Metrics.astro
+---
+<div class="metrics-content">
+  <h2>Métricas</h2>
+  <div class="metric-card">
+    <p>Nodos Expandidos: <strong id="metric-nodes">0</strong></p>
+    <p>Tiempo de Ejecución: <strong id="metric-time">0 ms</strong></p>
+  </div>
+  
+  <h2 style="margin-top: 20px;">Consola de Logs</h2>
+  <div id="terminal-log" class="terminal">
+    <p class="system-text">[Sistema]: Interfaz lista. Esperando algoritmo...</p>
+  </div>
+</div>
+
+<style>
+  h2 { font-size: 1.2rem; margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 5px; }
+  .metric-card { background: #333; padding: 12px; border-radius: 6px; margin-bottom: 10px; }
+  .metric-card p { margin: 8px 0; font-size: 0.9rem; }
+  .metric-card strong { color: #81d4fa; }
+  .terminal { background: #151515; border: 1px solid #444; padding: 10px; border-radius: 6px; height: 180px; overflow-y: auto; font-family: monospace; font-size: 0.8rem; }
+  .system-text { color: #a8ffb2; }
+</style>

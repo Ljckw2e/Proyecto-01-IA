@@ -1,0 +1,128 @@
+<div class="sidebar-content">
+  <h2>Configuración</h2>
+  
+  <div class="control-group">
+    <label for="select-problema">1. Selecciona el Problema:</label>
+    <select id="select-problema">
+      <option value="frozen_lake">Frozen Lake (No Informada)</option>
+      <option value="sokoban">Sokoban (Informada)</option>
+      <option value="reinas">8 Reinas (Búsqueda Local)</option>
+      <option value="gato">Gato / Tic-Tac-Toe (Adversaria)</option>
+    </select>
+  </div>
+
+  <div class="control-group">
+    <label for="select-algoritmo">2. Selecciona el Algoritmo:</label>
+    <select id="select-algoritmo">
+      </select>
+  </div>
+
+  <button id="btn-ejecutar" class="btn-primary">Ejecutar Algoritmo 🚀</button>
+</div>
+
+<script>
+  //Encargado de manejar la lógica de selección y comunicación con el backend de Python
+  const btnEjecutar = document.getElementById('btn-ejecutar');
+
+btnEjecutar?.addEventListener('click', async () => {
+  const problema = selectProblema.value;
+  const algoritmo = selectAlgoritmo.value;
+
+  try {
+    // Hace la petición a tu backend de Python en local
+    const respuesta = await fetch(`http://127.0.0.1:8000/api/buscar?problema=${problema}&algoritmo=${algoritmo}`);
+    const data = await respuesta.json();
+    
+    console.log("¡Datos recibidos de Python!", data);
+    
+    // TODO: Pasar estos datos al reproductor para empezar a iterar los pasos.
+    
+  } catch (error) {
+    console.error("Error conectando con el backend de Python:", error);
+    alert("Asegúrate de que tu servidor Python en el puerto 8000 esté encendido.");
+  }
+});
+
+  // Mapeo de algoritmos por problema
+  const algoritmosPorProblema = {
+    frozen_lake: [
+      { value: 'bfs', label: 'Breadth-First Search (BFS)' },
+      { value: 'dfs', label: 'Depth-First Search (DFS)' }
+    ],
+    sokoban: [
+      { value: 'astar', label: 'A* (A-Star)' },
+      { value: 'greedy', label: 'Greedy Best-First' }
+    ],
+    reinas: [
+      { value: 'hill_climbing', label: 'Hill Climbing' },
+      { value: 'genetic', label: 'Algoritmo Genético' }
+    ],
+    gato: [
+      { value: 'minimax', label: 'Minimax Clásico' },
+      { value: 'alphabeta', label: 'Poda Alfa-Beta' }
+    ]
+  };
+
+  const selectProblema = document.getElementById('select-problema') as HTMLSelectElement;
+  const selectAlgoritmo = document.getElementById('select-algoritmo') as HTMLSelectElement;
+
+  function actualizarAlgoritmos() {
+    const problemaSeleccionado = selectProblema.value;
+    const opciones = algoritmosPorProblema[problemaSeleccionado] || [];
+    
+    // Limpiar opciones anteriores
+    selectAlgoritmo.innerHTML = '';
+    
+    // Insertar nuevas opciones
+    opciones.forEach(alg => {
+      const option = document.createElement('option');
+      option.value = alg.value;
+      option.textContent = alg.label;
+      selectAlgoritmo.appendChild(option);
+    });
+
+    // Código opcional: Ocultar los otros tableros en la interfaz central
+    document.querySelectorAll('.tablero-view').forEach(view => view.classList.add('hidden'));
+    document.getElementById(`view-${problemaSeleccionado}`)?.classList.remove('hidden');
+  }
+
+  // Escuchar cambios en el selector de problemas
+  selectProblema.addEventListener('change', actualizarAlgoritmos);
+  
+  // Ejecutar una vez al cargar la página para llenar el primer estado
+  actualizarAlgoritmos();
+</script>
+
+<style>
+  .sidebar-content h2 {
+    margin-top: 0;
+    border-bottom: 2px solid #444;
+    padding-bottom: 10px;
+  }
+  .control-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  select {
+    padding: 8px;
+    background: #333;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 4px;
+  }
+  .btn-primary {
+    background: #007acc;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+  .btn-primary:hover {
+    background: #0062a3;
+  }
+</style>

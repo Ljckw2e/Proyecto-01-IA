@@ -1,0 +1,266 @@
+---
+// FrozenLake.astro
+// Este componente maneja la visualización de la cuadrícula y el agente.
+---
+
+<div class="frozen-lake-wrapper">
+  <div id="fl-grid-container" class="fl-grid">
+    </div>
+  
+  <div class="status-bar">
+    Estado: <span id="fl-status">Esperando ejecución...</span>
+  </div>
+</div>
+
+<script>
+  /**
+   * ==========================================
+   * PARTE 1: SIMULACIÓN DE DATOS (MOCK DATA)
+   * ==========================================
+   * Imagina que este JSON es lo que Python nos devolverá 
+   * tras ejecutar el algoritmo.
+   */
+  
+  // Representación del mapa: S=Inicio, F=Hielo Seguro, H=Agujero, G=Meta
+  const mockMap = [
+    ['S', 'F', 'H', 'F'],
+    ['F', 'F', 'F', 'H'],
+    ['F', 'H', 'F', 'H'],
+    ['H', 'F', 'F', 'G']
+  ];
+
+  // Simulación de los pasos intermedios de una búsqueda (ej. BFS explorando)
+  const mockSteps = [
+    { agente: [0, 0], visitados: [[0, 0]], log: "Inicio" },
+    { agente: [1, 0], visitados: [[0, 0], [1, 0]], log: "Abajo" },
+    { agente: [1, 1], visitados: [[0, 0], [1, 0], [1, 1]], log: "Derecha" },
+    { agente: [0, 1], visitados: [[0, 0], [1, 0], [1, 1], [0, 1]], log: "Arriba" },
+    { agente: [0, 2], visitados: [[0, 0], [1, 0], [1, 1], [0, 1], [0, 2]], log: "Derecha (¡Oh no, un agujero en la simulación!)" },
+    { agente: [1, 2], visitados: [[0, 0], [1, 0], [1, 1], [0, 1], [1, 2]], log: "Volviendo atrás, explorando vecino (1,2)" },
+    { agente: [2, 2], visitados: [[0, 0], [1, 0], [1, 1], [0, 1], [1, 2], [2, 2]], log: "Abajo" },
+    { agente: [3, 2], visitados: [[0, 0], [1, 0], [1, 1], [0, 1], [1, 2], [2, 2], [3, 2]], log: "Abajo" },
+    { agente: [3, 3], visitados: [[0, 0], [1, 0], [1, 1], [0, 1], [1, 2], [2, 2], [3, 2], [3, 3]], log: "Derecha (¡Meta encontrada!)" },
+  ];
+
+  /**
+   * ==========================================
+   * PARTE 2: LÓGICA DE VISUALIZACIÓN
+   * ==========================================
+   */
+  const gridContainer = document.getElementById('fl-grid-container');
+  const statusSpan = document.getElementById('fl-status');
+  const rows = mockMap.length;
+  const cols = mockMap[0].length;
+
+  // Variables para controlar la animación
+  let currentStepIndex = 0;
+  let intervalId = null;
+
+  // 1. Renderizado base del mapa (Dibuja los hielos, agujeros y meta)
+  function crearTableroBase() {
+    if (!gridContainer) return;
+    gridContainer.innerHTML = '';
+    
+    // Configurar CSS Grid dinámicamente según el número de columnas
+    gridContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'tile';
+        cell.id = `cell-${r}-${c}`; // ID único para cada celda
+
+        const tipo = mockMap[r][c];
+        if (tipo === 'S') {
+          cell.classList.add('tile-start');
+          cell.innerHTML = '<span class="icon">🎬</span>'; // Emoji de inicio
+        } else if (tipo === 'G') {
+          cell.classList.add('tile-goal');
+          cell.innerHTML = '<span class="icon">🚩</span>'; // Emoji de meta
+        } else if (tipo === 'H') {
+          cell.classList.add('tile-hole');
+          cell.innerHTML = '<span class="icon">🕳️</span>'; // Emoji de agujero
+        } else {
+          cell.classList.add('tile-frozen');
+          cell.innerHTML = '<span class="icon">🧊</span>'; // Emoji de hielo
+        }
+
+        gridContainer.appendChild(cell);
+      }
+    }
+  }
+
+  // 2. Renderizado de un paso específico (Mueve al agente y pinta el camino)
+  function renderizarPaso(index) {
+    if (!mockSteps[index]) return;
+    
+    const stepData = mockSteps[index];
+    const [agentR, agentC] = stepData.agente;
+
+    // A. Limpiar estados dinámicos anteriores (clases 'agent' y 'visited')
+    document.querySelectorAll('.tile').forEach(tile => {
+      tile.classList.remove('agent', 'visited');
+    });
+
+    // B. Pintar todos los nodos visitados hasta este paso (rastro azul)
+    stepData.visitados.forEach(([r, c]) => {
+      const cell = document.getElementById(`cell-${r}-${c}`);
+      cell?.classList.add('visited');
+    });
+
+    // C. Pintar la posición actual del agente (Robot)
+    const agentCell = document.getElementById(`cell-${agentR}-${agentC}`);
+    agentCell?.classList.add('agent');
+
+    // D. Actualizar barra de estado
+    if (statusSpan) statusSpan.textContent = `Paso ${index + 1}: ${stepData.log}`;
+  }
+
+  /**
+   * ==========================================
+   * PARTE 3: INTEGRACIÓN CON BOTONES DE REPRODUCCIÓN
+   * ==========================================
+   */
+  
+  // Escuchar eventos globales del layout principal (los botones definidos en index.astro)
+  
+  // Evento 'Reproducir'
+  window.addEventListener('reproducir_simulacion', () => {
+    if (intervalId) return; // Ya está corriendo
+    
+    // Si terminamos la simulación, reiniciar al dar play de nuevo
+    if (currentStepIndex >= mockSteps.length - 1) {
+        currentStepIndex = 0;
+    }
+
+    intervalId = setInterval(() => {
+      if (currentStepIndex < mockSteps.length) {
+        renderizarPaso(currentStepIndex);
+        currentStepIndex++;
+      } else {
+        clearInterval(intervalId); // Fin de la simulación
+        intervalId = null;
+        if (statusSpan) statusSpan.textContent += " - FINALIZADO";
+      }
+    }, 500); // Velocidad: 500ms por paso
+  });
+
+  // Evento 'Siguiente Paso' (Manual)
+  window.addEventListener('siguiente_paso', () => {
+    clearInterval(intervalId); // Pausar reproducción automática si estaba corriendo
+    intervalId = null;
+    
+    if (currentStepIndex < mockSteps.length - 1) {
+        currentStepIndex++;
+        renderizarPaso(currentStepIndex);
+    }
+  });
+
+   // Evento 'Paso Anterior' (Manual)
+  window.addEventListener('anterior_paso', () => {
+    clearInterval(intervalId);
+    intervalId = null;
+    
+    if (currentStepIndex > 0) {
+        currentStepIndex--;
+        renderizarPaso(currentStepIndex);
+    }
+  });
+
+
+  // Inicializar el tablero al cargar la página
+  crearTableroBase();
+  // Mostrar el estado inicial (agente en 0,0)
+  renderizarPaso(0); 
+
+</script>
+
+<style>
+  .frozen-lake-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    max-width: 500px; /* Tamaño máximo del tablero para que no se deforme */
+  }
+
+  .fl-grid {
+    display: grid;
+    gap: 4px; /* Espacio entre celdas */
+    width: 100%;
+    aspect-ratio: 1; /* Mantener tablero cuadrado */
+    background-color: #333;
+    padding: 4px;
+    border-radius: 8px;
+  }
+
+  /* Estilos base para cada celda */
+  .tile {
+    background-color: #e0f7fa; /* Color hielo base */
+    border-radius: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    transition: background-color 0.2s ease, transform 0.1s ease; /* Transiciones suaves */
+  }
+
+  .icon {
+    font-size: 2rem; /* Tamaño de los emojis */
+    opacity: 0.7;
+    z-index: 1;
+  }
+
+  /* Colores específicos según el tipo de celda del mapa */
+  .tile-start { background-color: #c8e6c9; } /* Verde suave */
+  .tile-goal { background-color: #fff9c4; }  /* Amarillo suave */
+  .tile-hole { background-color: #37474f; }  /* Gris muy oscuro */
+  .tile-hole .icon { opacity: 1; }
+
+  /* --- ESTADOS DINÁMICOS (Se activan con JS) --- */
+
+  /* 1. Nodos Visitados (El rastro de la búsqueda) */
+  .tile.visited {
+    background-color: #81d4fa; /* Azul más intenso para mostrar exploración */
+  }
+
+  /* 2. El Agente (Superpone el robot sobre el rastro visitado) */
+  .tile.agent {
+    transform: scale(1.05); /* Pequeño efecto de resalte */
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  }
+
+  /* Reemplazar el icono de fondo por el robot cuando el agente está encima */
+  .tile.agent .icon {
+    content: '🤖'; /* Esto no funciona directo en CSS con contenido, usamos una técnica diferente: */
+    visibility: hidden; /* Ocultamos el icono de fondo (hielo, inicio) */
+  }
+
+  /* Usamos un pseudo-elemento para dibujar el robot encima */
+  .tile.agent::after {
+    content: '🤖';
+    font-size: 2.5rem;
+    position: absolute;
+    z-index: 2;
+  }
+  
+  /* Evitar que el robot tape la bandera o la calavera si llega a ellas */
+  .tile-goal.agent::after { content: '🤖🚩'; font-size: 1.8rem; }
+  .tile-hole.agent::after { content: '💥'; font-size: 2.5rem; } /* Efecto explosión si cae en agujero */
+
+
+  .status-bar {
+    background: #444;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: #ccc;
+    width: 100%;
+    text-align: center;
+  }
+  #fl-status {
+    color: #81d4fa;
+    font-weight: bold;
+  }
+</style>

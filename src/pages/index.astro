@@ -1,0 +1,29 @@
+---
+// src/pages/index.astro
+import FrozenLakeViz from "../components/FrozenLakeViz.jsx";
+// @ts-ignore
+import "../styles/global.css";
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visualizador — Búsqueda No Informada</title>
+  </head>
+  <body>
+    <header>
+      <h1>Búsqueda No Informada</h1>
+      <p>Frozen Lake determinista · BFS vs DFS</p>
+    </header>
+
+    <main>
+      <!--
+        client:load → Astro hidrata este componente React en el navegador
+        de inmediato (necesario para interactividad).
+      -->
+      <FrozenLakeViz client:load />
+    </main>
+  </body>
+</html>
