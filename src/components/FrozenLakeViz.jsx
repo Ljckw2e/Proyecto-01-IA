@@ -11,7 +11,7 @@ const STATE_COLOR = {
 };
 
 export default function FrozenLakeViz() {
-  const [algorithm, setAlgorithm] = useState("bfs");
+  const [algorithm, setAlgorithm] = useState("bfs"); // ✨ ¡Revivido!
   const [rows, setRows] = useState(4);
   const [cols, setCols] = useState(4);
   const [isEditing, setIsEditing] = useState(true);
@@ -81,7 +81,7 @@ export default function FrozenLakeViz() {
       } catch (e) {
         setError("Error: Revisa la conexión con el servidor Python.");
         setIsEditing(true);
-      } finally {  // 🧠 Corregido: llevaba doble 'l'
+      } finally { 
         setLoading(false);
       }
     } else {
@@ -113,12 +113,10 @@ export default function FrozenLakeViz() {
         flexDirection: "column",
         gap: "20px"
       }}>
-        <h3 style={{ margin: "0", color: "#1e293b", fontSize: "18px", borderBottom: "2px solid #f1f5f9", paddingBottom: "10px" }}>
-          Configuración
-        </h3>
-
+        
+        {/* ✨ NUEVO ACOMODO: El Selector de Algoritmo ahora está arriba del todo */}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.5px" }}>ALGORITMO</span>
+          <span style={{ fontSize: "18px", fontWeight: "700", color: "#326ab8", letterSpacing: "0.5px" }}>ALGORITMO DE BÚSQUEDA</span>
           <div style={{ display: "flex", gap: "6px" }}>
             {["bfs", "dfs"].map((algo) => (
               <button 
@@ -139,11 +137,15 @@ export default function FrozenLakeViz() {
           </div>
         </div>
 
+        <h3 style={{ margin: "10px 0 0 0", color: "#1e293b", fontSize: "18px", borderBottom: "2px solid #f1f5f9", paddingBottom: "10px" }}>
+          Configuración del tablero
+        </h3>
+
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.5px" }}>DIMENSIONES</span>
           <div style={{ display: "flex", gap: "10px" }}>
             <label style={{ fontSize: "13px", color: "#1e293b", flex: 1 }}>Filas: <input type="number" min="3" max="8" value={rows} onChange={(e) => setRows(Number(e.target.value))} style={{ width: "100%", padding: "8px", marginTop: "4px", borderRadius: "6px", border: "1px solid #cbd5e1" }} disabled={!isEditing} /></label>
-            <label style={{ fontSize: "13px", color: "#1e293b", flex: 1 }}>Cols: <input type="number" min="3" max="8" value={cols} onChange={(e) => setCols(Number(e.target.value))} style={{ width: "100%", padding: "8px", marginTop: "4px", borderRadius: "6px", border: "1px solid #cbd5e1" }} disabled={!isEditing} /></label>
+            <label style={{ fontSize: "13px", color: "#1e293b", flex: 1 }}>Columnas: <input type="number" min="3" max="8" value={cols} onChange={(e) => setCols(Number(e.target.value))} style={{ width: "100%", padding: "8px", marginTop: "4px", borderRadius: "6px", border: "1px solid #cbd5e1" }} disabled={!isEditing} /></label>
           </div>
         </div>
 
@@ -261,15 +263,41 @@ export default function FrozenLakeViz() {
           })}
         </div>
 
-        {/* Controles multimedia */}
+        {/* Controles multimedia optimizados estilo reproductor */}
         <div style={{ display: "flex", gap: "8px", background: "#1e293b", padding: "8px 16px", borderRadius: "30px" }}>
-          <button onClick={handleRun} disabled={loading} style={{ padding: "8px 18px", background: "#10b981", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer" }}>
-            {loading ? "Calculando..." : "Ejecutar"}
-          </button>
-          <button onClick={() => setRunning(false)} style={{ padding: "8px 18px", background: "#ef4444", color: "white", border: "none", borderRadius: "20px", cursor: "pointer" }}>
-            Pausar
-          </button>
-          <button onClick={() => { setRunning(false); setStepIdx(-1); }} style={{ padding: "8px 18px", background: "#64748b", color: "white", border: "none", borderRadius: "20px", cursor: "pointer" }}>
+          {running ? (
+            <button 
+              onClick={() => setRunning(false)} 
+              style={{ 
+                padding: "8px 18px", background: "#ef4444", color: "white", 
+                border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer",
+                transition: "all 0.2s"
+              }}
+            >
+              ⏸ Pausar
+            </button>
+          ) : (
+            <button 
+              onClick={handleRun} 
+              disabled={loading} 
+              style={{ 
+                padding: "8px 18px", background: "#10b981", color: "white", 
+                border: "none", borderRadius: "20px", fontWeight: "bold", 
+                cursor: loading ? "not-allowed" : "pointer",
+                transition: "all 0.2s"
+              }}
+            >
+              {loading ? "Calculando..." : "▶ Ejecutar"}
+            </button>
+          )}
+
+          <button 
+            onClick={() => { setRunning(false); setStepIdx(-1); }} 
+            style={{ 
+              padding: "8px 18px", background: "#64748b", color: "white", 
+              border: "none", borderRadius: "20px", cursor: "pointer" 
+            }}
+          >
             ↺ Reiniciar
           </button>
         </div>
