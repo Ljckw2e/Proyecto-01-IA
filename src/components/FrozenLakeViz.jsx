@@ -11,10 +11,12 @@ const STATE_COLOR = {
 };
 
 export default function FrozenLakeViz() {
-  const [algorithm, setAlgorithm] = useState("bfs"); // ✨ ¡Revivido!
+  const [algorithm, setAlgorithm] = useState("bfs");
   const [rows, setRows] = useState(4);
   const [cols, setCols] = useState(4);
   const [isEditing, setIsEditing] = useState(true);
+  const [editTool, setEditTool] = useState("H"); 
+
   const [gridMap, setGridMap] = useState([
     ['S', 'F', 'F', 'F'],
     ['F', 'H', 'F', 'H'],
@@ -30,6 +32,8 @@ export default function FrozenLakeViz() {
   const [loading, setLoading] = useState(false);
 
   const intervalRef = useRef(null);
+  // ✨ Referencia para el auto-scroll vertical del contenedor de la tabla
+  const tableContainerRef = useRef(null); 
   const totalSteps = data?.steps?.length ?? 0;
 
   useEffect(() => {
@@ -61,6 +65,13 @@ export default function FrozenLakeViz() {
     }, speed);
     return () => clearInterval(intervalRef.current);
   }, [running, speed, totalSteps]);
+
+  // ✨ Auto-scroll vertical automático para la tabla cuando avanza la animación
+  useEffect(() => {
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollTop = tableContainerRef.current.scrollHeight;
+    }
+  }, [stepIdx]);
 
   const handleRun = async () => {
     if (isEditing) {
@@ -95,237 +106,285 @@ export default function FrozenLakeViz() {
   return (
     <div style={{ 
       display: "flex", 
-      gap: "30px", 
+      flexDirection: "column", // ✨ Contenedor principal en formato vertical (fila arriba, tabla abajo)
+      gap: "24px", 
       width: "100%",
       maxWidth: "1400px", 
       margin: "0 auto",
       boxSizing: "border-box"
     }}>
 
-      {/* 📋 COLUMNA 1: CONFIGURACIÓN */}
+      {/* 🏙️ SECCIÓN SUPERIOR: CONFIGURACIÓN + TABLERO INTERACTIVO */}
+      <div style={{ display: "flex", gap: "30px", width: "100%", alignItems: "flex-start" }}>
+        
+        {/* 📋 COLUMNA 1: CONFIGURACIÓN */}
+        <div style={{ 
+          width: "300px", 
+          background: "#ffffff", 
+          padding: "24px", 
+          borderRadius: "16px", 
+          boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "20px"
+        }}>
+          
+          {/* Selector de Algoritmo */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.5px" }}>ALGORITMO DE BÚSQUEDA</span>
+            <div style={{ display: "flex", gap: "6px" }}>
+              {["bfs", "dfs"].map((algo) => (
+                <button 
+                  key={algo}
+                  onClick={() => { if (isEditing) setAlgorithm(algo); }}
+                  style={{ 
+                    flex: 1, padding: "10px", borderRadius: "8px", border: "none", fontWeight: "bold", 
+                    cursor: isEditing ? "pointer" : "not-allowed",
+                    background: algorithm === algo ? "#534AB7" : "#f1f5f9",
+                    color: algorithm === algo ? "#fff" : "#64748b",
+                    opacity: !isEditing && algorithm !== algo ? 0.5 : 1,
+                    transition: "all 0.2s"
+                  }}
+                >
+                  {algo.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <h3 style={{ margin: "10px 0 0 0", color: "#1e293b", fontSize: "18px", borderBottom: "2px solid #f1f5f9", paddingBottom: "10px" }}>
+            Configuración del tablero
+          </h3>
+
+          {/* Dimensiones */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.5px" }}>DIMENSIONES</span>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <label style={{ fontSize: "13px", color: "#1e293b", flex: 1 }}>Filas: <input type="number" min="3" max="8" value={rows} onChange={(e) => setRows(Number(e.target.value))} style={{ width: "100%", padding: "8px", marginTop: "4px", borderRadius: "6px", border: "1px solid #cbd5e1" }} disabled={!isEditing} /></label>
+              <label style={{ fontSize: "13px", color: "#1e293b", flex: 1 }}>Columnas: <input type="number" min="3" max="8" value={cols} onChange={(e) => setCols(Number(e.target.value))} style={{ width: "100%", padding: "8px", marginTop: "4px", borderRadius: "6px", border: "1px solid #cbd5e1" }} disabled={!isEditing} /></label>
+            </div>
+          </div>
+
+          {/* Brochas de Diseño */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", borderTop: "1px solid #f1f5f9", paddingTop: "14px" }}>
+            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.5px" }}>HERRAMIENTA DE DISEÑO</span>
+            <div style={{ display: "flex", gap: "6px" }}>
+              {[
+                { id: "H", label: "Hoyo (H)", color: "#2196F3" },
+                { id: "S", label: "Inicio (S)", color: "#4CAF50" },
+                { id: "G", label: "Meta (G)", color: "#FF9800" }
+              ].map((tool) => (
+                <button
+                  key={tool.id}
+                  onClick={() => setEditTool(tool.id)}
+                  disabled={!isEditing}
+                  style={{
+                    flex: 1, padding: "8px 4px", borderRadius: "8px", border: "none", fontSize: "12px", fontWeight: "bold", 
+                    cursor: isEditing ? "pointer" : "not-allowed",
+                    background: editTool === tool.id ? tool.color : "#f1f5f9",
+                    color: editTool === tool.id ? "#fff" : "#64748b",
+                    transition: "all 0.15s"
+                  }}
+                >
+                  {tool.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button 
+            onClick={() => { setIsEditing(true); setData(null); setStepIdx(-1); setRunning(false); }} 
+            style={{ padding: "10px", background: isEditing ? "#EEEDFE" : "#fff", color: "#534AB7", border: "1px solid #C4C0F0", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}
+          >
+            {isEditing ? "Modo: Diseñando" : "Volver a Diseñar"}
+          </button>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", borderTop: "1px solid #f1f5f9", paddingTop: "16px" }}>
+            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b" }}>LEYENDA DE EJECUCIÓN</span>
+            {[
+              [STATE_COLOR.current, "Posición del Agente"],
+              [STATE_COLOR.frontier, "Frontera (Cola/Pila)"],
+              [STATE_COLOR.visited, "Casilla Analizada"],
+              [STATE_COLOR.path, "Camino Solución"],
+            ].map(([color, label]) => (
+              <div key={label} style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: "#334155" }}>
+                <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: color, border: "1px solid #e2e8f0" }} />
+                {label}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 🎮 COLUMNA 2: TABLERO CENTRAL (Se expande horizontalmente al máximo) */}
+        <div style={{ 
+          flex: "1", 
+          background: "#ffffff",
+          padding: "24px",
+          borderRadius: "16px",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+          display: "flex", 
+          flexDirection: "column", 
+          alignItems: "center", 
+          justifyContent: "flex-start",
+          gap: "24px" 
+        }}>
+          {error && <div style={{ background: "#FEF2F2", color: "#991B1B", padding: "12px", borderRadius: "8px", fontSize: "13px" }}>⚠ {error}</div>}
+
+          <div style={{ 
+            display: "grid", 
+            gridTemplateColumns: `repeat(${cols}, 75px)`, 
+            gap: "8px", 
+            background: "#cbd5e1", 
+            padding: "12px", 
+            borderRadius: "14px"
+          }}>
+            {gridMap.flat().map((cell, pos) => {
+              const r = Math.floor(pos / cols);
+              const c = pos % cols;
+              
+              let cellBg = "#f1f5f9"; 
+              let cellText = "";
+
+              if (cell === 'S') { cellBg = "#4CAF50"; cellText = "S"; }
+              else if (cell === 'G') { cellBg = "#FF9800"; cellText = "G"; }
+              else if (cell === 'H') { cellBg = "#2196F3"; cellText = "✕"; }
+
+              if (currentStep) {
+                if (currentStep.solution_path && currentStep.solution_path.includes(pos)) {
+                  cellBg = STATE_COLOR.path; 
+                  cellText = cell === 'G' ? "G" : "✔";
+                } else if (currentStep.current === pos) {
+                  cellBg = STATE_COLOR.current; 
+                  cellText = <img src="/hacker.png" alt="Hacker" style={{ width: "45px", height: "45px", objectFit: "contain" }} />;
+                } else if (currentStep.frontier && currentStep.frontier.includes(pos)) {
+                  cellBg = STATE_COLOR.frontier;
+                } else if (currentStep.visited && currentStep.visited.includes(pos)) {
+                  cellBg = STATE_COLOR.visited;
+                }
+              }
+
+              return (
+                <div
+                  key={pos}
+                  onClick={() => {
+                    if (!isEditing) return;
+                    const nuevoMapa = [...gridMap.map(rowArr => [...rowArr])];
+                    const valorActual = nuevoMapa[r][c];
+
+                    if (editTool === "H") {
+                      if (valorActual === 'S' || valorActual === 'G') return;
+                      nuevoMapa[r][c] = valorActual === 'F' ? 'H' : 'F';
+                    } else if (editTool === "S") {
+                      if (valorActual === 'G') return;
+                      for (let i = 0; i < rows; i++) {
+                        for (let j = 0; j < cols; j++) { if (nuevoMapa[i][j] === 'S') nuevoMapa[i][j] = 'F'; }
+                      }
+                      nuevoMapa[r][c] = 'S';
+                    } else if (editTool === "G") {
+                      if (valorActual === 'S') return;
+                      for (let i = 0; i < rows; i++) {
+                        for (let j = 0; j < cols; j++) { if (nuevoMapa[i][j] === 'G') nuevoMapa[i][j] = 'F'; }
+                      }
+                      nuevoMapa[r][c] = 'G';
+                    }
+                    setGridMap(nuevoMapa);
+                  }}
+                  style={{
+                    width: "75px", height: "75px", background: cellBg, display: "flex", 
+                    flexDirection: "column", justifyContent: "center", alignItems: "center", 
+                    borderRadius: "8px", fontWeight: "bold", fontSize: "16px",
+                    cursor: isEditing ? "pointer" : "default",
+                    border: "1px solid rgba(0,0,0,0.05)", transition: "all 0.15s"
+                  }}
+                >
+                  <span>{cellText}</span>
+                  <span style={{ fontSize: "9px", opacity: 0.4, marginTop: "2px", color: "#000" }}>{`[${r},${c}]`}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Un solo botón para Play/Pause */}
+          <div style={{ display: "flex", gap: "8px", background: "#1e293b", padding: "8px 16px", borderRadius: "30px" }}>
+            {running ? (
+              <button onClick={() => setRunning(false)} style={{ padding: "8px 18px", background: "#ef4444", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer" }}>⏸ Pausar</button>
+            ) : (
+              <button onClick={handleRun} disabled={loading} style={{ padding: "8px 18px", background: "#10b981", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer" }}>
+                {loading ? "Calculando..." : "▶ Ejecutar"}
+              </button>
+            )}
+            <button onClick={() => { setRunning(false); setStepIdx(-1); }} style={{ padding: "8px 18px", background: "#64748b", color: "white", border: "none", borderRadius: "20px", cursor: "pointer" }}>↺ Reiniciar</button>
+          </div>
+        </div>
+
+      </div>
+
+      {/* 🪵 📊 SECCIÓN INFERIOR: TABLA DE PASOS COMPLETA */}
       <div style={{ 
-        width: "300px", 
+        width: "100%", 
         background: "#ffffff", 
         padding: "24px", 
         borderRadius: "16px", 
         boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
         display: "flex",
         flexDirection: "column",
-        gap: "20px"
+        gap: "14px",
+        boxSizing: "border-box"
       }}>
-        
-        {/* ✨ NUEVO ACOMODO: El Selector de Algoritmo ahora está arriba del todo */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <span style={{ fontSize: "18px", fontWeight: "700", color: "#000000", letterSpacing: "0.5px" }}>Algoritmo de Búsqueda</span>
-          <div style={{ display: "flex", gap: "6px" }}>
-            {["bfs", "dfs"].map((algo) => (
-              <button 
-                key={algo}
-                onClick={() => { if (isEditing) setAlgorithm(algo); }}
-                style={{ 
-                  flex: 1, padding: "10px", borderRadius: "8px", border: "none", fontWeight: "bold", 
-                  cursor: isEditing ? "pointer" : "not-allowed",
-                  background: algorithm === algo ? "#534AB7" : "#f1f5f9",
-                  color: algorithm === algo ? "#fff" : "#64748b",
-                  opacity: !isEditing && algorithm !== algo ? 0.5 : 1,
-                  transition: "all 0.2s"
-                }}
-              >
-                {algo.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <h3 style={{ margin: "10px 0 0 0", color: "#1e293b", fontSize: "18px", borderBottom: "2px solid #f1f5f9", paddingBottom: "10px" }}>
-          Configuración del mapa
-        </h3>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.5px" }}>DIMENSIONES</span>
-          <div style={{ display: "flex", gap: "10px" }}>
-            <label style={{ fontSize: "13px", color: "#1e293b", flex: 1 }}>Filas: <input type="number" min="3" max="8" value={rows} onChange={(e) => setRows(Number(e.target.value))} style={{ width: "100%", padding: "8px", marginTop: "4px", borderRadius: "6px", border: "1px solid #cbd5e1" }} disabled={!isEditing} /></label>
-            <label style={{ fontSize: "13px", color: "#1e293b", flex: 1 }}>Columnas: <input type="number" min="3" max="8" value={cols} onChange={(e) => setCols(Number(e.target.value))} style={{ width: "100%", padding: "8px", marginTop: "4px", borderRadius: "6px", border: "1px solid #cbd5e1" }} disabled={!isEditing} /></label>
-          </div>
-        </div>
-
-        <button 
-          onClick={() => { setIsEditing(true); setData(null); setStepIdx(-1); setRunning(false); }} 
-          style={{ padding: "10px", background: isEditing ? "#EEEDFE" : "#fff", color: "#534AB7", border: "1px solid #C4C0F0", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}
-        >
-          {isEditing ? "Modo: Diseñando" : "Volver a Diseñar"}
-        </button>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px", borderTop: "1px solid #f1f5f9", paddingTop: "16px" }}>
-          <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b" }}>LEYENDA</span>
-          {[
-            ["#2196F3", "Hoyo (H)"],
-            [STATE_COLOR.current, "Expandiendo"],
-            [STATE_COLOR.frontier, "Frontera (Cola/Pila)"],
-            [STATE_COLOR.visited, "Visitado"],
-            [STATE_COLOR.path, "Camino Solución"],
-          ].map(([color, label]) => (
-            <div key={label} style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: "#334155" }}>
-              <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: color, border: "1px solid #e2e8f0" }} />
-              {label}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 🎮 COLUMNA 2: TABLERO CENTRAL */}
-      <div style={{ 
-        flex: "2", 
-        background: "#ffffff",
-        padding: "24px",
-        borderRadius: "16px",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-        display: "flex", 
-        flexDirection: "column", 
-        alignItems: "center", 
-        justifyContent: "center",
-        gap: "24px" 
-      }}>
-        {error && (
-          <div style={{ background: "#FEF2F2", color: "#991B1B", padding: "12px", borderRadius: "8px", fontSize: "13px", border: "1px solid #FCA5A5" }}>
-            ⚠ {error}
-          </div>
-        )}
-
-        <div style={{ 
-          display: "grid", 
-          gridTemplateColumns: `repeat(${cols}, 75px)`, 
-          gap: "8px", 
-          background: "#cbd5e1", 
-          padding: "12px", 
-          borderRadius: "14px"
-        }}>
-          {gridMap.flat().map((cell, pos) => {
-            const r = Math.floor(pos / cols);
-            const c = pos % cols;
-            
-            let cellBg = "#f1f5f9"; 
-            let cellText = "";
-
-            if (cell === 'S') { cellBg = "#e2e8f0"; cellText = "S"; }
-            else if (cell === 'G') { cellBg = "#FF9800"; cellText = "G"; }
-            else if (cell === 'H') { cellBg = "#2196F3"; cellText = "✕"; }
-
-            if (currentStep) {
-              if (currentStep.solution_path && currentStep.solution_path.includes(pos)) {
-                cellBg = STATE_COLOR.path; 
-                cellText = cell === 'G' ? "G" : "✔";
-              } else if (currentStep.current === pos) {
-                cellBg = STATE_COLOR.current; 
-                cellText = (
-                  <img src="/hacker.png" 
-                    alt="Hacker Icon" 
-                    style={{ 
-                      width: "45px", 
-                      height: "45px", 
-                      objectFit: "contain"
-                    }} 
-                  />
-                );
-              } else if (currentStep.frontier && currentStep.frontier.includes(pos)) {
-                cellBg = STATE_COLOR.frontier;
-              } else if (currentStep.visited && currentStep.visited.includes(pos)) {
-                cellBg = STATE_COLOR.visited;
-              }
-            } else {
-              if (cell === 'S') cellBg = "#4CAF50";
-            }
-
-            return (
-              <div
-                key={pos}
-                onClick={() => {
-                  if (!isEditing) return;
-                  if (cell === 'S' || cell === 'G') return;
-
-                  const nuevoMapa = [...gridMap.map(rowArr => [...rowArr])];
-                  nuevoMapa[r][c] = cell === 'F' ? 'H' : 'F';
-                  setGridMap(nuevoMapa);
-                }}
-                style={{
-                  width: "75px", height: "75px", background: cellBg, display: "flex", 
-                  flexDirection: "column", justifyContent: "center", alignItems: "center", 
-                  borderRadius: "8px", fontWeight: "bold", fontSize: "16px",
-                  color: cellBg === "#f1f5f9" ? "#64748b" : "#fff",
-                  cursor: isEditing && cell !== 'S' && cell !== 'G' ? "pointer" : "default",
-                  border: "1px solid rgba(0,0,0,0.05)", transition: "all 0.15s"
-                }}
-              >
-                <span>{cellText}</span>
-                <span style={{ fontSize: "9px", opacity: 0.4, marginTop: "2px", color: "#000" }}>{`[${r},${c}]`}</span>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Controles multimedia optimizados estilo reproductor */}
-        <div style={{ display: "flex", gap: "8px", background: "#1e293b", padding: "8px 16px", borderRadius: "30px" }}>
-          {running ? (
-            <button 
-              onClick={() => setRunning(false)} 
-              style={{ 
-                padding: "8px 18px", background: "#ef4444", color: "white", 
-                border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer",
-                transition: "all 0.2s"
-              }}
-            >
-              ⏸ Pausar
-            </button>
-          ) : (
-            <button 
-              onClick={handleRun} 
-              disabled={loading} 
-              style={{ 
-                padding: "8px 18px", background: "#10b981", color: "white", 
-                border: "none", borderRadius: "20px", fontWeight: "bold", 
-                cursor: loading ? "not-allowed" : "pointer",
-                transition: "all 0.2s"
-              }}
-            >
-              {loading ? "Calculando..." : "▶ Ejecutar"}
-            </button>
-          )}
-
-          <button 
-            onClick={() => { setRunning(false); setStepIdx(-1); }} 
-            style={{ 
-              padding: "8px 18px", background: "#64748b", color: "white", 
-              border: "none", borderRadius: "20px", cursor: "pointer" 
-            }}
-          >
-            ↺ Reiniciar
-          </button>
-        </div>
-      </div>
-
-      {/* 🪵 COLUMNA 3: PANEL DE LOGS */}
-      <div style={{ 
-        flex: "1.2", 
-        background: "#ffffff", 
-        padding: "24px", 
-        borderRadius: "16px", 
-        boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-        display: "flex",
-        flexDirection: "column"
-      }}>
-        <h4 style={{ margin: "0 0 14px 0", color: "#1e293b", fontSize: "14px", fontWeight: "700", letterSpacing: "0.5px" }}>
-          LÓGICA DE PASOS ({algorithm.toUpperCase()})
+        <h4 style={{ margin: "0", color: "#1e293b", fontSize: "14px", fontWeight: "700", letterSpacing: "0.5px" }}>
+          TABLA DE SEGUIMIENTO E INSPECCIÓN DE ESTADOS ({algorithm.toUpperCase()})
         </h4>
-        <div style={{ flex: 1, minHeight: "350px", overflowY: "auto", background: "#f8fafc", padding: "14px", borderRadius: "10px", border: "1px solid #e2e8f0", fontFamily: "monospace", fontSize: "12px", color: "#334155" }}>
-          {stepIdx < 0 ? (
-            <span style={{ color: "#94a3b8" }}>Presiona "Ejecutar" para comenzar...</span>
-          ) : (
-            data?.steps?.slice(0, stepIdx + 1).map((s, i) => (
-              <div key={i} style={{ marginBottom: "6px", color: i === stepIdx ? "#534AB7" : "#64748b", fontWeight: i === stepIdx ? "bold" : "normal" }}>
-                [{s.step}] {s.message}
-              </div>
-            ))
-          )}
+        
+        {/* Contenedor vertical de la tabla con altura fija para scroll */}
+        <div 
+          ref={tableContainerRef}
+          style={{ 
+            maxHeight: "260px", 
+            overflowY: "auto", 
+            borderRadius: "8px", 
+            border: "1px solid #e2e8f0" 
+          }}
+        >
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", fontFamily: "system-ui, sans-serif" }}>
+            <thead>
+              <tr style={{ background: "#f8fafc", borderBottom: "2px solid #e2e8f0", position: "sticky", top: 0, zIndex: 1 }}>
+                <th style={{ padding: "12px 16px", width: "100px", color: "#475569", fontWeight: "700" }}>Paso</th>
+                <th style={{ padding: "12px 16px", color: "#475569", fontWeight: "700" }}>Descripción del Estado Evaluado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stepIdx < 0 ? (
+                <tr>
+                  <td colSpan="2" style={{ padding: "20px", textAlgin: "center", color: "#94a3b8", fontStyle: "italic", textAlign: "center" }}>
+                    Aquí aparecerán los pasos de la ejecución una vez que inicies el algoritmo. Cada fila representa un estado evaluado, mostrando su posición en la secuencia y una breve descripción de lo que ocurre en ese paso.
+                  </td>
+                </tr>
+              ) : (
+                data?.steps?.slice(0, stepIdx + 1).map((s, i) => {
+                  const esUltimoPaso = i === stepIdx;
+                  return (
+                    <tr 
+                      key={i} 
+                      style={{ 
+                        borderBottom: "1px solid #f1f5f9",
+                        background: esUltimoPaso ? "#EEEDFE" : "transparent",
+                        color: esUltimoPaso ? "#534AB7" : "#334155",
+                        fontWeight: esUltimoPaso ? "600" : "400",
+                        transition: "all 0.15s"
+                      }}
+                    >
+                      <td style={{ padding: "12px 16px", fontFamily: "monospace" }}>
+                        #{String(s.step).padStart(2, "0")}
+                      </td>
+                      <td style={{ padding: "12px 16px" }}>
+                        {s.message}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
