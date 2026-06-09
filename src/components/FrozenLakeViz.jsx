@@ -162,7 +162,7 @@ export default function FrozenLakeViz() {
             ["#2196F3", "Hoyo (H)"],
             [STATE_COLOR.current, "Expandiendo"],
             [STATE_COLOR.frontier, "Frontera (Cola/Pila)"],
-            [STATE_COLOR.visited, "Ya Visitado"],
+            [STATE_COLOR.visited, "Visitado"],
             [STATE_COLOR.path, "Camino Solución"],
           ].map(([color, label]) => (
             <div key={label} style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: "#334155" }}>
