@@ -146,8 +146,6 @@ export default function FrozenLakeViz() {
     setData(null);
   }, [rows, cols]);
 
-  // ✨ Corregido: Se eliminó el useEffect intruso que cargaba automáticamente al inicio
-
   // Auto-scroll del log
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;

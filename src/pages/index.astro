@@ -1,29 +1,146 @@
 ---
-// src/pages/index.astro
-import FrozenLakeViz from "../components/FrozenLakeViz.jsx";
-// @ts-ignore
-import "../styles/global.css";
+import Layout from '../layouts/Layout.astro';
+// Importamos tus dos componentes de React
+import FrozenLakeViz from '../components/FrozenLakeViz.jsx';
+import SokobanViz from '../components/Tableros/SokobanViz.jsx';
 ---
 
-<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Visualizador — Búsqueda No Informada</title>
-  </head>
-  <body>
-    <header>
-      <h1>Búsqueda No Informada</h1>
-      <p>Frozen Lake determinista · BFS vs DFS</p>
-    </header>
+<Layout title="Módulos de Inteligencia Artificial">
+  <nav class="top-navbar">
+    <div class="nav-logo">
+      Inteligencia Artificial - Algoritmos de Búsqueda
+    </div>
+    <div class="nav-tabs">
+      <button class="tab-btn active" data-target="view-frozen">
+        Búsqueda No Informada (Frozen Lake)
+      </button>
+      <button class="tab-btn" data-target="view-sokoban">
+        Búsqueda Informada (Sokoban)
+      </button>
+      <button class="tab-btn disabled" disabled>
+        Búsqueda Local (8 Reinas)
+      </button>
+      <button class="tab-btn disabled" disabled>
+        Búsqueda Adversaria (Gato)
+      </button>
+    </div>
+  </nav>
 
-    <main>
-      <!--
-        client:load → Astro hidrata este componente React en el navegador
-        de inmediato (necesario para interactividad).
-      -->
+  <main class="main-content">
+    
+    <div id="view-frozen" class="problem-view">
       <FrozenLakeViz client:load />
-    </main>
-  </body>
-</html>
+    </div>
+
+    <div id="view-sokoban" class="problem-view hidden">
+      <SokobanViz client:load />
+    </div>
+
+  </main>
+</Layout>
+
+<script>
+  const botones = document.querySelectorAll('.tab-btn');
+  const vistas = document.querySelectorAll('.problem-view');
+
+  botones.forEach(boton => {
+    boton.addEventListener('click', () => {
+      // 1. Quitar la clase activa de todos los botones
+      botones.forEach(btn => btn.classList.remove('active'));
+      // 2. Agregar clase activa al botón presionado
+      boton.classList.add('active');
+
+      // 3. Ocultar todas las vistas de los tableros
+      vistas.forEach(vista => vista.classList.add('hidden'));
+      
+      // 4. Mostrar únicamente la vista que corresponde al botón
+      const targetId = boton.getAttribute('data-target');
+      if (targetId) {
+        document.getElementById(targetId)?.classList.remove('hidden');
+      }
+    });
+  });
+</script>
+
+<style>
+  :global(body) {
+    margin: 0;
+    padding: 0;
+    background-color: #111111; /* Fondo oscuro elegante */
+    color: #ffffff;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  .top-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1a1a1a;
+    padding: 0 24px;
+    height: 64px;
+    border-bottom: 1px solid #2a2a2a;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .nav-logo {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #81d4fa;
+  }
+
+  .nav-tabs {
+    display: flex;
+    gap: 8px;
+    height: 100%;
+    align-items: center;
+  }
+
+  .tab-btn {
+    background: transparent;
+    border: none;
+    color: #aaa;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .tab-btn:hover:not(.disabled) {
+    background-color: #262626;
+    color: #fff;
+  }
+
+  .tab-btn.active {
+    background-color: #534AB7; /* Color morado de tu tema */
+    color: #ffffff;
+  }
+
+  .tab-btn.disabled {
+    color: #444;
+    cursor: not-allowed;
+  }
+
+  .main-content {
+    padding: 24px;
+    display: flex;
+    justify-content: center;
+    min-height: calc(100vh - 112px);
+  }
+
+  .problem-view {
+    width: 100%;
+    max-width: 1200px;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .problem-view.hidden {
+    display: none;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
