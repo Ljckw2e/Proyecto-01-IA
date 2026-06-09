@@ -1,8 +1,9 @@
 ---
 import Layout from '../layouts/Layout.astro';
-// Importamos tus dos componentes de React
+// Importamos tus componentes de React
 import FrozenLakeViz from '../components/FrozenLakeViz.jsx';
 import SokobanViz from '../components/Tableros/SokobanViz.jsx';
+import QueensViz from '../components/Tableros/QueensViz'; // <-- 1. Importar el nuevo
 ---
 
 <Layout title="Módulos de Inteligencia Artificial">
@@ -17,7 +18,7 @@ import SokobanViz from '../components/Tableros/SokobanViz.jsx';
       <button class="tab-btn" data-target="view-sokoban">
         Búsqueda Informada (Sokoban)
       </button>
-      <button class="tab-btn disabled" disabled>
+      <button class="tab-btn" data-target="view-queens">
         Búsqueda Local (8 Reinas)
       </button>
       <button class="tab-btn disabled" disabled>
@@ -34,6 +35,10 @@ import SokobanViz from '../components/Tableros/SokobanViz.jsx';
 
     <div id="view-sokoban" class="problem-view hidden">
       <SokobanViz client:load />
+    </div>
+
+    <div id="view-queens" class="problem-view hidden">
+      <QueensViz client:load />
     </div>
 
   </main>
