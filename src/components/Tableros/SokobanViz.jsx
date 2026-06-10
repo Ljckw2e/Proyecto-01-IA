@@ -1,46 +1,49 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 const CELL_BASE = {
-  W: { bg: "#475569", label: "🧱" }, // Pared
-  T: { bg: "#ffedd5", label: "🎯" }, // Objetivo (Target)
-  F: { bg: "#f1f5f9", label: "" },   // Piso vacío
+  W: { bg: "#475569", label: "🧱" }, 
+  T: { bg: "#ffedd5", label: "🎯" }, 
+  F: { bg: "#f1f5f9", label: "" },   
 };
 
-// 🗺️ DISEÑO FIJO DE LOS 3 NIVELES DE MATHS IS FUN
+// 🗺️ NIVELES REDISEÑADOS CON MAYOR DIFICULTAD
 const PRESET_LEVELS = {
   1: {
-    name: "Nivel 1: Introducción",
-    rows: 5, cols: 6,
+    name: "Nivel 1: El Pasillo",
+    rows: 5, cols: 7,
     grid: [
-      ['W', 'W', 'W', 'W', 'W', 'W'],
-      ['W', 'P', 'F', 'F', 'T', 'W'],
-      ['W', 'F', 'B', 'F', 'F', 'W'],
-      ['W', 'F', 'F', 'F', 'F', 'W'],
-      ['W', 'W', 'W', 'W', 'W', 'W']
+      ['W', 'W', 'W', 'W', 'W', 'W', 'W'],
+      ['W', 'F', 'F', 'F', 'F', 'F', 'W'],
+      ['W', 'P', 'F', 'B', 'F', 'T', 'W'],
+      ['W', 'F', 'F', 'F', 'F', 'F', 'W'],
+      ['W', 'W', 'W', 'W', 'W', 'W', 'W']
     ]
   },
   2: {
-    name: "Nivel 2: Clásico Almacén",
-    rows: 6, cols: 6,
+    name: "Nivel 2: Gestión de Almacen",
+    rows: 7, cols: 8,
     grid: [
-      ['W', 'W', 'W', 'W', 'W', 'W'],
-      ['W', 'T', 'W', 'F', 'F', 'W'],
-      ['W', 'F', 'B', 'B', 'T', 'W'],
-      ['W', 'F', 'W', 'F', 'F', 'W'],
-      ['W', 'P', 'F', 'F', 'F', 'W'],
-      ['W', 'W', 'W', 'W', 'W', 'W']
+      ['W', 'W', 'W', 'W', 'W', 'W', 'W', 'W'],
+      ['W', 'T', 'F', 'F', 'W', 'F', 'F', 'W'],
+      ['W', 'T', 'B', 'F', 'F', 'B', 'F', 'W'],
+      ['W', 'W', 'F', 'W', 'W', 'F', 'F', 'W'],
+      ['W', 'F', 'F', 'F', 'B', 'F', 'F', 'W'],
+      ['W', 'F', 'P', 'F', 'T', 'F', 'F', 'W'],
+      ['W', 'W', 'W', 'W', 'W', 'W', 'W', 'W']
     ]
   },
   3: {
-    name: "Nivel 3: Desafío de Bloques",
-    rows: 6, cols: 7,
+    name: "Nivel 3: El Laberinto de Cajas",
+    rows: 8, cols: 9,
     grid: [
-      ['W', 'W', 'W', 'W', 'W', 'W', 'W'],
-      ['W', 'T', 'F', 'F', 'F', 'T', 'W'],
-      ['W', 'F', 'W', 'B', 'W', 'F', 'W'],
-      ['W', 'F', 'B', 'P', 'B', 'F', 'W'],
-      ['W', 'T', 'F', 'F', 'F', 'T', 'W'],
-      ['W', 'W', 'W', 'W', 'W', 'W', 'W']
+      ['W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W'],
+      ['W', 'F', 'F', 'F', 'F', 'W', 'T', 'T', 'W'],
+      ['W', 'F', 'B', 'F', 'F', 'W', 'T', 'T', 'W'],
+      ['W', 'W', 'W', 'F', 'B', 'F', 'F', 'F', 'W'],
+      ['W', 'F', 'F', 'F', 'P', 'F', 'W', 'F', 'W'],
+      ['W', 'F', 'B', 'F', 'B', 'F', 'W', 'F', 'W'],
+      ['W', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'W'],
+      ['W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W']
     ]
   }
 };
@@ -53,10 +56,8 @@ export default function SokobanViz() {
   const [gameWon, setGameWon] = useState(false);
   const [manualLogs, setManualLogs] = useState([]);
 
-  // ✨ Referencia para controlar el auto-scroll horizontal de la cinta de pasos
-  const logContainerRef = useRef(null);
+  const tableContainerRef = useRef(null);
 
-  // Cargar nivel seleccionado limpiando estados anteriores
   const cargarNivel = (lvlNum) => {
     const lvl = PRESET_LEVELS[lvlNum];
     setCurrentLevel(lvlNum);
@@ -64,37 +65,30 @@ export default function SokobanViz() {
     setCols(lvl.cols);
     setGridMap(lvl.grid.map(row => [...row]));
     setGameWon(false);
-    setManualLogs([`Nivel ${lvlNum} cargado. Usa las flechas o WASD para moverte.`]);
+    setManualLogs([`Sistema iniciado. Reto #${lvlNum} cargado correctamente.`]);
   };
 
-  // Auto-scroll horizontal hacia la derecha cada vez que se agrega un paso
+  // Auto-scroll para la tabla de abajo
   useEffect(() => {
-    if (logContainerRef.current) {
-      logContainerRef.current.scrollLeft = logContainerRef.current.scrollWidth;
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollTop = tableContainerRef.current.scrollHeight;
     }
   }, [manualLogs]);
 
-  // Motor de movimiento y empujes
   const moverJugador = useCallback((dr, dc) => {
     if (gameWon) return;
 
     setGridMap((prevMap) => {
       const nuevoMapa = prevMap.map(row => [...row]);
-      
       let pr = -1, pc = -1;
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          if (nuevoMapa[r][c] === 'P' || nuevoMapa[r][c] === 'M') {
-            pr = r; pc = c; break;
-          }
+          if (nuevoMapa[r][c] === 'P' || nuevoMapa[r][c] === 'M') { pr = r; pc = c; break; }
         }
       }
 
       if (pr === -1) return prevMap;
-
-      const tr = pr + dr;
-      const tc = pc + dc;
-
+      const tr = pr + dr, tc = pc + dc;
       if (!(0 <= tr && tr < rows && 0 <= tc && tc < cols)) return prevMap;
 
       const celdaDestino = nuevoMapa[tr][tc];
@@ -102,64 +96,39 @@ export default function SokobanViz() {
 
       const origenEraMeta = nuevoMapa[pr][pc] === 'M';
 
-      const colocarJugador = (r, c) => {
-        if (nuevoMapa[r][c] === 'T' || nuevoMapa[r][c] === 'X') {
-          nuevoMapa[r][c] = 'M';
-        } else {
-          nuevoMapa[r][c] = 'P';
-        }
-      };
-
       if (celdaDestino === 'F' || celdaDestino === 'T') {
         nuevoMapa[pr][pc] = origenEraMeta ? 'T' : 'F';
-        colocarJugador(tr, tc);
-        setManualLogs(prev => [...prev, `Jugador avanzo a [${tr}, ${tc}]`]);
+        nuevoMapa[tr][tc] = (celdaDestino === 'T') ? 'M' : 'P';
+        setManualLogs(prev => [...prev, `Desplazamiento manual hacia coordenadas [${tr}, ${tc}]`]);
         return nuevoMapa;
       }
 
       if (celdaDestino === 'B' || celdaDestino === 'X') {
-        const dR = tr + dr;
-        const dC = tc + dc;
-
+        const dR = tr + dr, dC = tc + dc;
         if (!(0 <= dR && dR < rows && 0 <= dC && dC < cols)) return prevMap;
-
         const celdaDetras = nuevoMapa[dR][dC];
 
         if (celdaDetras === 'F' || celdaDetras === 'T') {
-          const destinoCajaEsMeta = celdaDetras === 'T';
-          const cajaEmpujadaEstabaEnMeta = celdaDestino === 'X';
-
-          nuevoMapa[dR][dC] = destinoCajaEsMeta ? 'X' : 'B';
+          nuevoMapa[dR][dC] = (celdaDetras === 'T') ? 'X' : 'B';
           nuevoMapa[pr][pc] = origenEraMeta ? 'T' : 'F';
-          nuevoMapa[tr][tc] = cajaEmpujadaEstabaEnMeta ? 'M' : 'P';
-
-          setManualLogs(prev => [...prev, `Caja empujada hacia [${dR}, ${dC}]`]);
+          nuevoMapa[tr][tc] = (celdaDestino === 'X') ? 'M' : 'P';
+          setManualLogs(prev => [...prev, `Unidad de carga desplazada a posicion [${dR}, ${dC}]`]);
 
           let victoria = true;
           for (let i = 0; i < rows; i++) {
-            for (let j = 0; j < cols; j++) {
-              if (nuevoMapa[i][j] === 'B') victoria = false;
-            }
+            for (let j = 0; j < cols; j++) { if (nuevoMapa[i][j] === 'B') victoria = false; }
           }
-          if (victoria) {
-            setGameWon(true);
-            setManualLogs(prev => [...prev, "Nivel completado con exito. ¡Excelente!"]);
-          }
-
+          if (victoria) { setGameWon(true); setManualLogs(prev => [...prev, "PROTOCOLOS CUMPLIDOS: Almacen optimizado con exito."]); }
           return nuevoMapa;
         }
       }
-
       return prevMap;
     });
   }, [rows, cols, gameWon]);
 
-  // Capturador de teclado
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d", "W", "A", "S", "D"].includes(e.key)) {
-        e.preventDefault(); 
-      }
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d", "W", "A", "S", "D"].includes(e.key)) e.preventDefault(); 
       switch (e.key.toLowerCase()) {
         case "arrowup": case "w": moverJugador(-1, 0); break;
         case "arrowdown": case "s": moverJugador(1, 0); break;
@@ -180,204 +149,90 @@ export default function SokobanViz() {
   };
 
   return (
-    <div style={{ 
-      display: "flex", 
-      flexDirection: "column", // ✨ Cambiado a dirección de columna principal
-      gap: "24px", 
-      width: "100%",
-      maxWidth: "1400px", 
-      margin: "0 auto",
-      boxSizing: "border-box"
-    }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "24px", width: "100%", maxWidth: "1400px", margin: "0 auto", boxSizing: "border-box" }}>
 
-      {/* 🏙️ SECCIÓN SUPERIOR: PANEL IZQUIERDO + TABLERO */}
-      <div style={{ display: "flex", gap: "24px", width: "100%", alignItems: "flex-start" }}>
+      {/* SECCIÓN SUPERIOR */}
+      <div style={{ display: "flex", gap: "30px", width: "100%", alignItems: "flex-start" }}>
         
-        {/* 📋 COLUMNA 1: PANEL DE SELECCIÓN */}
-        <div style={{ 
-          width: "300px", 
-          background: "#ffffff", 
-          padding: "24px", 
-          borderRadius: "16px", 
-          boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-          display: "flex",
-          flexDirection: "column",
-          gap: "20px"
-        }}>
-          <h3 style={{ margin: "0", color: "#1e293b", fontSize: "17px", borderBottom: "2px solid #f1f5f9", paddingBottom: "10px" }}>
-            Selección de Niveles
-          </h3>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.5px" }}>SELECCIONA UN RETO</span>
-            <div style={{ display: "flex", gap: "6px" }}>
-              {[1, 2, 3].map((num) => (
-                <button 
-                  key={num}
-                  onClick={() => cargarNivel(num)}
-                  style={{ 
-                    flex: 1, padding: "10px", borderRadius: "8px", border: "none", fontWeight: "bold", cursor: "pointer",
-                    background: currentLevel === num ? "#534AB7" : "#f1f5f9",
-                    color: currentLevel === num ? "#fff" : "#64748b",
-                    transition: "all 0.2s"
-                  }}
-                >
-                  Lvl {num}
-                </button>
-              ))}
-            </div>
+        {/* PANEL LATERAL */}
+        <div style={{ width: "300px", background: "#ffffff", padding: "24px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", gap: "20px" }}>
+          <h3 style={{ margin: "0", color: "#1e293b", fontSize: "18px", borderBottom: "2px solid #f1f5f9", paddingBottom: "10px" }}>Selección de Niveles</h3>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+            {[1, 2, 3].map((num) => (
+              <button key={num} onClick={() => cargarNivel(num)} style={{ flex: "1 1 30%", padding: "10px", borderRadius: "8px", border: "none", fontWeight: "bold", cursor: "pointer", background: currentLevel === num ? "#534AB7" : "#f1f5f9", color: currentLevel === num ? "#fff" : "#64748b", transition: "all 0.2s" }}>Lvl {num}</button>
+            ))}
           </div>
-
           <div style={{ display: "flex", flexDirection: "column", gap: "8px", borderTop: "1px solid #f1f5f9", paddingTop: "16px" }}>
-            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b" }}>LEYENDA DE OBJETOS</span>
-            {[
-              ["#475569", "🧱 Muro / Pared"],
-              ["#ffedd5", "🎯 Meta de depósito"],
-              ["#f1f5f9", "📦 Caja de Madera"],
-              ["#bbf7d0", "🟢 Caja bien colocada"],
-              ["#f1f5f9", "👷 Operario / Jugador"]
-            ].map(([color, label]) => (
+            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b" }}>LEYENDA</span>
+            {[ ["#475569", "🧱 Muro"], ["#ffedd5", "🎯 Meta"], ["#f1f5f9", "📦 Caja"], ["#bbf7d0", "🟢 Colocada"], ["#f1f5f9", "👷 Jugador"] ].map(([color, label]) => (
               <div key={label} style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: "#334155" }}>
-                <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: color, border: "1px solid #cbd5e1" }} />
-                {label}
+                <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: color, border: "1px solid #cbd5e1" }} />{label}
               </div>
             ))}
           </div>
         </div>
 
-        {/* 🎮 COLUMNA 2: TABLERO ARCADE CENTRAL (Ocupa todo el resto del espacio superior) */}
-        <div style={{ 
-          flex: "1", 
-          background: "#ffffff",
-          padding: "24px",
-          borderRadius: "16px",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-          display: "flex", 
-          flexDirection: "column", 
-          alignItems: "center", 
-          justifyContent: "flex-start", 
-          gap: "20px"
-        }}>
+        {/* TABLERO CENTRAL */}
+        <div style={{ flex: "1", background: "#ffffff", padding: "24px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", gap: "20px" }}>
+          <div style={{ fontWeight: "bold", color: "#1e293b", fontSize: "16px" }}>{PRESET_LEVELS[currentLevel].name}</div>
           
-          <div style={{ fontWeight: "bold", color: "#1e293b", fontSize: "16px" }}>
-            {PRESET_LEVELS[currentLevel].name}
-          </div>
-
           {gameWon && (
-            <div style={{ background: "#dcfce7", color: "#15803d", padding: "10px 24px", borderRadius: "30px", fontWeight: "bold", fontSize: "14px" }}>
-              🏆 ¡Increíble! Has solucionado el mapa a la perfección
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", background: "#dcfce7", padding: "15px 30px", borderRadius: "16px", border: "1px solid #bbf7d0" }}>
+              <span style={{ color: "#15803d", fontWeight: "bold" }}>🏆 ¡Nivel completado con éxito!</span>
+              {currentLevel < 3 && (
+                <button 
+                  onClick={() => cargarNivel(currentLevel + 1)} 
+                  style={{ padding: "8px 20px", background: "#15803d", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 10px rgba(21,128,61,0.3)" }}
+                >
+                  Siguiente Nivel →
+                </button>
+              )}
             </div>
           )}
 
-          {/* El mapa cuadriculado */}
-          <div style={{ 
-            display: "grid", 
-            gridTemplateColumns: `repeat(${cols}, 75px)`, 
-            gap: "8px", 
-            background: "#cbd5e1", 
-            padding: "12px", 
-            borderRadius: "14px",
-            boxShadow: "inset 0 2px 8px rgba(0,0,0,0.08)"
-          }}>
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 65px)`, gap: "6px", background: "#cbd5e1", padding: "10px", borderRadius: "14px", boxShadow: "inset 0 2px 8px rgba(0,0,0,0.08)" }}>
             {gridMap.flat().map((cell, pos) => {
-              const r = Math.floor(pos / cols);
-              const c = pos % cols;
-              const content = renderCellContent(r, c, cell);
-              
+              const r = Math.floor(pos / cols), c = pos % cols;
               let bg = CELL_BASE[cell]?.bg ?? "#f1f5f9";
-              if (cell === 'P' || cell === 'B' || cell === 'M' || cell === 'X') bg = "#f1f5f9";
-              if (cell === 'M' || cell === 'X') bg = "#ffedd5"; 
-              if (cell === 'X') bg = "#bbf7d0"; 
-
+              if (['P','B','M','X'].includes(cell)) bg = (cell === 'M') ? "#ffedd5" : (cell === 'X') ? "#bbf7d0" : "#f1f5f9";
               return (
-                <div
-                  key={pos}
-                  style={{
-                    width: "75px", height: "75px", background: bg, display: "flex", 
-                    flexDirection: "column", justifyContent: "center", alignItems: "center", 
-                    fontSize: "26px", borderRadius: "8px", border: "1px solid rgba(0,0,0,0.04)"
-                  }}
-                >
-                  <span>{content}</span>
-                  <span style={{ fontSize: "8px", opacity: 0.3, marginTop: "2px", color: "#000" }}>{`[${r},${c}]`}</span>
+                <div key={pos} style={{ width: "65px", height: "65px", background: bg, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", fontSize: "24px", borderRadius: "8px", border: "1px solid rgba(0,0,0,0.04)" }}>
+                  {renderCellContent(r, c, cell)}
+                  <span style={{ fontSize: "7px", opacity: 0.3, marginTop: "2px", color: "#000" }}>{`[${r},${c}]`}</span>
                 </div>
               );
             })}
           </div>
 
-          {/* Barra de Controles */}
           <div style={{ display: "flex", gap: "8px", background: "#1e293b", padding: "8px 16px", borderRadius: "30px" }}>
-            <button 
-              onClick={() => cargarNivel(currentLevel)} 
-              style={{ 
-                padding: "8px 18px", background: "#64748b", color: "white", 
-                border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer",
-                transition: "all 0.2s"
-              }}
-            >
-              ↺ Reiniciar Nivel
-            </button>
+            <button onClick={() => cargarNivel(currentLevel)} style={{ padding: "8px 18px", background: "#64748b", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer" }}>↺ Reiniciar</button>
           </div>
         </div>
-
       </div>
 
-      {/* 🪵 🎚️ SECCIÓN INFERIOR: CINTA DE HISTORIAL HORIZONTAL */}
-      <div style={{ 
-        width: "100%", 
-        background: "#ffffff", 
-        padding: "20px 24px", 
-        borderRadius: "16px", 
-        boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-        display: "flex",
-        flexDirection: "column",
-        gap: "12px",
-        boxSizing: "border-box"
-      }}>
-        <h4 style={{ margin: "0", color: "#1e293b", fontSize: "14px", fontWeight: "700", letterSpacing: "0.5px" }}>
-          HISTORIAL DE MOVIMIENTOS (TIMELINE)
-        </h4>
-        
-        {/* Contenedor horizontal elástico con barra de desplazamiento */}
-        <div 
-          ref={logContainerRef}
-          style={{ 
-            display: "flex", 
-            flexDirection: "row", // ✨ Elementos alineados de izquierda a derecha
-            overflowX: "auto",    // ✨ Scroll puramente horizontal
-            gap: "12px", 
-            padding: "8px 4px", 
-            background: "#f8fafc", 
-            borderRadius: "10px", 
-            border: "1px solid #e2e8f0",
-            scrollBehavior: "smooth"
-          }}
-        >
-          {manualLogs.map((log, i) => {
-            const esUltimoPaso = i === manualLogs.length - 1;
-            return (
-              <div 
-                key={i} 
-                style={{ 
-                  // Tarjetas con ancho fijo para que se enfilen horizontalmente en la cinta
-                  flex: "0 0 auto", 
-                  minWidth: "170px",
-                  padding: "10px 14px",
-                  borderRadius: "8px",
-                  fontSize: "13px",
-                  textAlign: "center",
-                  border: esUltimoPaso ? "1px solid #C4C0F0" : "1px solid #e2e8f0",
-                  background: esUltimoPaso ? "#EEEDFE" : "#ffffff", 
-                  color: esUltimoPaso ? "#534AB7" : "#475569", 
-                  fontWeight: esUltimoPaso ? "600" : "400",
-                  boxShadow: "0 2px 5px rgba(0,0,0,0.02)",
-                  transition: "all 0.15s"
-                }}
-              >
-                {log}
-              </div>
-            );
-          })}
+      {/* TABLA DE PASOS INFERIOR */}
+      <div style={{ width: "100%", background: "#ffffff", padding: "24px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", gap: "14px" }}>
+        <h4 style={{ margin: "0", color: "#1e293b", fontSize: "14px", fontWeight: "700", letterSpacing: "0.5px" }}>📊 REGISTRO TÉCNICO DE ACTIVIDAD</h4>
+        <div ref={tableContainerRef} style={{ maxHeight: "250px", overflowY: "auto", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+            <thead>
+              <tr style={{ background: "#f8fafc", borderBottom: "2px solid #e2e8f0", position: "sticky", top: 0, zIndex: 1 }}>
+                <th style={{ padding: "12px 16px", width: "100px", textAlign: "left", color: "#475569" }}>Evento</th>
+                <th style={{ padding: "12px 16px", textAlign: "left", color: "#475569" }}>Descripción de la acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {manualLogs.map((log, i) => {
+                const esUltimo = i === manualLogs.length - 1;
+                return (
+                  <tr key={i} style={{ borderBottom: "1px solid #f1f5f9", background: esUltimo ? "#EEEDFE" : "transparent", color: esUltimo ? "#534AB7" : "#334155", fontWeight: esUltimo ? "600" : "400" }}>
+                    <td style={{ padding: "10px 16px", fontFamily: "monospace" }}>ID_{String(i).padStart(3, '0')}</td>
+                    <td style={{ padding: "10px 16px" }}>{log}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
 
