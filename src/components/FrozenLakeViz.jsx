@@ -170,7 +170,7 @@ export default function FrozenLakeViz() {
             <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.5px" }}>HERRAMIENTA DE DISEÑO</span>
             <div style={{ display: "flex", gap: "6px" }}>
               {[
-                { id: "H", label: "Hoyo (H)", color: "#2196F3" },
+                { id: "H", label: "Hoyo (X)", color: "#2196F3" },
                 { id: "S", label: "Inicio (S)", color: "#4CAF50" },
                 { id: "G", label: "Meta (G)", color: "#FF9800" }
               ].map((tool) => (
