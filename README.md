@@ -1,46 +1,65 @@
-# Astro Starter Kit: Basics
+# Proyecto Final - Algoritmos de busqueda 🚀
 
-```sh
-npm create astro@latest -- --template basics
+Este es el repositorio del proyecto final de la materia de Inteligencia Artificial. Esta es una plataforma web asíncrona que permite vizualisar los diferentes algoritmos de busqueda. El proyecto está construido utilizando **Astro**  e integrado con **React** para componentes interactivos y dinámicos.
+
+---
+
+## 🛠️ Tecnologías Utilizadas
+
+* **Framework Principal:** [Astro](https://astro.build/) (Configurado en modo Server-Side Rendering - SSR)
+* **Librería de Interfaz:** [React](https://react.dev/) (Integrado en islas de interactividad)
+
+* **Estilos:** [Tailwind CSS](https://tailwindcss.com/)
+* **Animaciones:** [GSAP (GreenSock Animation Platform)](https://gsap.com/)
+* **Manejo de Gráficos:** [Recharts](https://recharts.org/)
+* **Iconografía:** [Lucide React](https://lucide.dev/)
+
+---
+
+## 📋 Requisitos Previos
+
+Antes de comenzar, asegúrate de tener instalado lo siguiente en tu equipo:
+
+* **Node.js:** Versión `18.x` o superior recomendada.
+* **Gestor de paquetes:** `pnpm` (puedes instalarlo con `npm install -g pnpm` si aún no lo tienes).
+
+---
+
+## 🚀 Instalación y Configuración
+
+Sigue estos pasos para clonar el proyecto e instalar las dependencias correctamente:
+
+### 1. Clonar el repositorio e ingresar a la carpeta
+```bash
+git https://github.com/Ljckw2e/Proyecto-01-IA
+cd [Tu-ruta]
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
+### 2. Instala dependencias
+Instala todos los modulos definidos en el `package.json` usando `pnpm`:
+```bash
+pnpm install
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
 
-## 🧞 Commands
+## 3. Ejecución en Entorno de Desarrollo
+Para iniciar un servidor de desarrollo local de Astro, ejecute el siguiente comando:
+```bash
+npm run dev
+```
+Por defecto, Astro intentará levantar el entorno en el puerto `4321` .
+Si requieres forzar a Astro a correr específicamente en otro puerto utiliza:
+```bash
+npm dev --port [####]
+```
 
-All commands are run from the root of the project, from a terminal:
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+## 📁 Estructura principal del proyecto
+La arquitectura del código está modularizada para facilitar el mantenimiento y la inyección asíncrona de datos:
+```Estructura
 
-## 👀 Want to learn more?
+```
 
+
+## Documentación de ASTRO
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
