@@ -1,23 +1,38 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const API_URL = "http://127.0.0.1:8000";
 
-const S = {
-  card: { background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "14px 16px" },
-  btn: {
-    padding: "8px 18px", borderRadius: 8, border: "1px solid #333",
-    background: "#534AB7", color: "#fff", fontWeight: 600, fontSize: 13, cursor: "pointer",
-  },
-  label: { fontSize: 11, color: "#888", marginBottom: 4, fontWeight: 500, letterSpacing: ".04em", textTransform: "uppercase" },
-  statVal: { fontSize: 22, fontWeight: 600, color: "#81d4fa" },
-};
-
 export default function TicTacToeViz() {
+  const [gameMode, setGameMode] = useState("vs_ia"); 
   const [board, setBoard] = useState(Array(9).fill(""));
+  const [turn, setTurn] = useState("MIN (X)"); 
   const [loading, setLoading] = useState(false);
-  const [logs, setLogs] = useState(["El juego ha iniciado. Tu juegas como X."]);
   const [cellScores, setCellScores] = useState({});
-  const [winner, setWinner] = useState(null); // 'X', 'O', 'Empate' o null
+  const [winner, setWinner] = useState(null); 
+  const [iaThinking, setIaThinking] = useState(""); 
+  const [historicoArbol, setHistoricoArbol] = useState([]);
+
+  useEffect(() => {
+    if (gameMode === "humano_asistido" && board.every(c => c === "") && !winner) {
+      actualizarAsistente(board, "MIN (X)");
+    }
+  }, [gameMode]);
+
+  useEffect(() => {
+    reiniciarEntornoBase();
+  }, []);
+
+  const reiniciarEntornoBase = () => {
+    setHistoricoArbol([
+      {
+        turno: 0,
+        jugadorQueDecidio: "MIN (X)",
+        valorRaiz: 0,
+        accionElegida: "Inicio",
+        opcionesDisponibles: [] 
+      }
+    ]);
+  };
 
   const verificarGanadorLocal = (b) => {
     const lineas = [
@@ -34,8 +49,7 @@ export default function TicTacToeViz() {
     return null;
   };
 
-  const realizarTurnoIA = async (tableroActual) => {
-    setLoading(true);
+  const consultarMinimax = async (tableroActual) => {
     try {
       const res = await fetch(`${API_URL}/api/gato`, {
         method: "POST",
@@ -43,138 +57,318 @@ export default function TicTacToeViz() {
         body: JSON.stringify({ board: tableroActual })
       });
       if (!res.ok) throw new Error("Error en la API");
-      const data = await res.json();
-
-      const nuevoTablero = [...tableroActual];
-      if (data.best_move !== -1) {
-        nuevoTablero[data.best_move] = "O";
-        setBoard(nuevoTablero);
-        setCellScores(data.scores);
-        setLogs(prev => [...prev, data.message]);
-
-        const campoGanador = verificarGanadorLocal(nuevoTablero);
-        if (campoGanador) setWinner(campoGanador);
-      }
+      return await res.json();
     } catch (e) {
-      setLogs(prev => [...prev, "⚠ Error de conexión con el resolvedor Minimax."]);
-    } finally {
-      setLoading(false);
+      console.error("Error conectando con Minimax:", e);
+      return null;
     }
+  };
+
+  const realizarTurnoIA = async (tableroConX) => {
+    setLoading(true);
+    setIaThinking("🧠 Computando ramas del árbol...\nMAX (O) está aplicando Backtracking recursivo sobre los estados sucesores.");
+    
+    const data = await consultarMinimax(tableroConX);
+    
+    if (data && data.best_move !== -1) {
+      const nuevoTablero = [...tableroConX];
+      nuevoTablero[data.best_move] = "O";
+      setBoard(nuevoTablero);
+      setCellScores(data.scores);
+      
+      const valorElegido = data.scores[data.best_move];
+      
+      const ramasEvaluadas = Object.keys(data.scores).map(key => ({
+        casilla: key,
+        val: data.scores[key]
+      }));
+
+      setHistoricoArbol(prev => [...prev, {
+        turno: prev.length,
+        jugadorQueDecidio: "MAX (O)",
+        valorRaiz: valorElegido,
+        accionElegida: `C_${data.best_move}`,
+        opcionesDisponibles: ramasEvaluadas
+      }]);
+
+      interpretarPensamiento(data.best_move, data.scores);
+
+      const campoGanador = verificarGanadorLocal(nuevoTablero);
+      if (campoGanador) setWinner(campoGanador);
+      else setTurn("MIN (X)");
+    }
+    setLoading(false);
+  };
+
+  const actualizarAsistente = async (tableroBase, proximoJugador) => {
+    setLoading(true);
+    const data = await consultarMinimax(tableroBase);
+    if (data) {
+      setCellScores(data.scores);
+      const valores = Object.values(data.scores);
+      if (valores.length > 0) {
+        const esMax = proximoJugador.includes("MAX");
+        const mejorValor = esMax ? Math.max(...valores) : Math.min(...valores);
+        const sugerencia = Object.keys(data.scores).find(key => data.scores[key] === mejorValor);
+        
+        setIaThinking(`Modelo Formal de Decisión:\nTurno de ${proximoJugador}.\nEl criterio de selección sugiere expandir la acción [C_${sugerencia}] con función de utilidad v = (${mejorValor}).`);
+      }
+    }
+    setLoading(false);
+  };
+
+  const interpretarPensamiento = (movimiento, puntuaciones) => {
+    const valorElegido = puntuaciones[movimiento];
+    let explicacion = `Cómputo de Función de Utilidad:\n`;
+    explicacion += `MAX (O) seleccionó la casilla C_${movimiento} aplicando un criterio de maximización pura con v = (${valorElegido}).\n\n`;
+    
+    if (valorElegido > 0) {
+      explicacion += `➔ Diagnóstico: Estrategia de Maximización. MAX detectó un camino libre hacia un nodo terminal ganador (+10).`;
+    } else if (valorElegido < 0) {
+      explicacion += `➔ Diagnóstico: Contención defensiva. MIN forzó la reducción de la utilidad general, obligando a MAX a mitigar daños.`;
+    } else {
+      explicacion += `➔ Diagnóstico: Equilibrio perfecto. Ambos agentes juegan con racionalidad perfecta (v = 0).`;
+    }
+    setIaThinking(explicacion);
   };
 
   const handleCellClick = async (index) => {
     if (board[index] !== "" || loading || winner) return;
 
-    // 1. Turno del Jugador (X)
-    const tableroConX = [...board];
-    tableroConX[index] = "X";
-    setBoard(tableroConX);
-    setLogs(prev => [...prev, `Jugador colocó X en la casilla ${index}.`]);
+    const jugadorActual = turn.includes("MIN") ? "X" : "O";
+    const etiquetaJugador = turn.includes("MIN") ? "MIN (X)" : "MAX (O)";
+    
+    const nuevoTablero = [...board];
+    nuevoTablero[index] = jugadorActual;
+    setBoard(nuevoTablero);
+    
+    const utilAnterior = cellScores[index] !== undefined ? cellScores[index] : 0;
 
-    const campoGanador = verificarGanadorLocal(tableroConX);
+    const ramasOpcionesHumano = Object.keys(cellScores).map(key => ({
+      casilla: key,
+      val: cellScores[key]
+    }));
+
+    setHistoricoArbol(prev => [...prev, {
+      turno: prev.length,
+      jugadorQueDecidio: etiquetaJugador,
+      valorRaiz: utilAnterior,
+      accionElegida: `C_${index}`,
+      opcionesDisponibles: ramasOpcionesHumano
+    }]);
+
+    const campoGanador = verificarGanadorLocal(nuevoTablero);
     if (campoGanador) {
       setWinner(campoGanador);
+      setCellScores({}); 
       return;
     }
 
-    // 2. Turno inmediato de la IA (O)
-    await realizarTurnoIA(tableroConX);
+    if (gameMode === "vs_ia") {
+      setTurn("MAX (O)");
+      await realizarTurnoIA(nuevoTablero);
+    } else {
+      const siguienteTurnoLabel = jugadorActual === "X" ? "MAX (O)" : "MIN (X)";
+      setTurn(siguienteTurnoLabel);
+      await actualizarAsistente(nuevoTablero, siguienteTurnoLabel);
+    }
+  };
+
+  const cambiarModo = (modo) => {
+    setGameMode(modo);
+    setBoard(Array(9).fill(""));
+    setCellScores({});
+    setWinner(null);
+    setIaThinking("");
+    setTurn("MIN (X)");
+    reiniciarEntornoBase();
   };
 
   const reiniciarJuego = () => {
     setBoard(Array(9).fill(""));
     setCellScores({});
     setWinner(null);
-    setLogs(["Tablero reiniciado. Coloca tu X."]);
+    setIaThinking("");
+    setTurn("MIN (X)");
+    reiniciarEntornoBase();
+    if (gameMode === "humano_asistido") {
+      actualizarAsistente(Array(9).fill(""), "MIN (X)");
+    }
   };
 
+  // Detectar si la cadena de texto actual representa una decisión de la IA para cambiarle el color
+  const esDecisionIA = iaThinking.includes("MAX (O) seleccionó");
+
   return (
-    <div style={{ display: "flex", gap: 24, flexWrap: "wrap", justifyContent: "center" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box" }}>
       
-      {/* CUADRÍCULA DEL TABLERO */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: "center" }}>
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 100px)",
-          gap: 6,
-          background: "#2a2a2a",
-          padding: 8,
-          borderRadius: 12
-        }}>
-          {board.map((cell, idx) => {
-            const score = cellScores[idx];
-            return (
-              <div
-                key={idx}
-                onClick={() => handleCellClick(idx)}
-                style={{
-                  width: 100, height: 100, background: "#111", borderRadius: 8,
-                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                  fontSize: "2.2rem", fontWeight: "bold", color: cell === "X" ? "#81d4fa" : "#EF9F27",
-                  cursor: cell === "" && !winner && !loading ? "pointer" : "default",
-                  position: "relative", userSelect: "none"
+      {/* SECCIÓN SUPERIOR ALINEADA */}
+      <div style={{ display: "flex", gap: "24px", width: "100%", alignItems: "stretch", flexWrap: "wrap" }}>
+        
+        {/* PANEL DE CONTROL */}
+        <div style={{ width: "280px", background: "#ffffff", padding: "20px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "16px" }}>
+          <div>
+            <h3 style={{ margin: "0 0 12px 0", color: "#1e293b", fontSize: "16px", borderBottom: "2px solid #f1f5f9", paddingBottom: "8px", fontWeight: "bold" }}>
+              Árbol de Búsqueda
+            </h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <span style={{ fontSize: "10px", fontWeight: "700", color: "#64748b", letterSpacing: "0.5px" }}>MODELO DE TRANSICIÓN</span>
+              <button 
+                onClick={() => cambiarModo("vs_ia")}
+                disabled={loading}
+                style={{ 
+                  padding: "10px", borderRadius: "8px", border: "none", fontWeight: "bold", cursor: "pointer", fontSize: "12px",
+                  background: gameMode === "vs_ia" ? "#534AB7" : "#f1f5f9", color: gameMode === "vs_ia" ? "#fff" : "#64748b", transition: "all 0.15s", opacity: loading ? 0.6 : 1
                 }}
               >
-                {cell}
-                {/* Mostrar el mini-peso heurístico calculado por Minimax */}
-                {cell === "" && score !== undefined && (
-                  <span style={{ position: "absolute", bottom: 6, right: 8, fontSize: 10, color: score > 0 ? "#5DCAA5" : score < 0 ? "#FCA5A5" : "#888" }}>
-                    v: {score}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        <button style={S.btn} onClick={reiniciarJuego}>↺ Reiniciar Partida</button>
-      </div>
-
-      {/* DETALLES Y LOGS DE BÚSQUEDA */}
-      <div style={{ flex: 1, minWidth: 280, display: "flex", flexDirection: "column", gap: 14 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
-          <div style={S.card}>
-            <div style={S.label}>Tu Rol</div>
-            <div style={{ ...S.statVal, color: "#81d4fa" }}>Humano (X)</div>
+                Enfrentar a MAX (IA)
+              </button>
+              <button 
+                onClick={() => cambiarModo("humano_asistido")}
+                disabled={loading}
+                style={{ 
+                  padding: "10px", borderRadius: "8px", border: "none", fontWeight: "bold", cursor: "pointer", fontSize: "12px",
+                  background: gameMode === "humano_asistido" ? "#534AB7" : "#f1f5f9", color: gameMode === "humano_asistido" ? "#fff" : "#64748b", transition: "all 0.15s", opacity: loading ? 0.6 : 1
+                }}
+              >
+                Modo Humano Asistido
+              </button>
+            </div>
           </div>
-          <div style={S.card}>
-            <div style={S.label}>Rival</div>
-            <div style={{ ...S.statVal, color: "#EF9F27" }}>Minimax (O)</div>
-          </div>
-        </div>
 
-        <div style={{ ...S.card, background: "#1E1B4B", borderColor: "#312E81", fontSize: 13, color: "#C7D2FE", lineHeight: 1.6 }}>
-          <strong>Minimax — Búsqueda Adversaria</strong><br />
-          Explora todo el árbol de juego de manera recursiva simulando los turnos alternos. Maximiza el beneficio de la IA y asume que el jugador elegirá siempre la opción que más la perjudique (Minimizar).
-        </div>
-
-        {/* Historial en tiempo real */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-          <div style={S.label}>Árbol de Decisiones (Consola)</div>
-          <div style={{ height: 130, overflowY: "auto", ...S.card, fontFamily: "monospace", fontSize: 12, background: "#111", color: "#aaa" }}>
-            {logs.map((log, i) => (
-              <div key={i} style={{ color: i === logs.length - 1 ? "#fff" : "#777" }}>
-                › {log}
-              </div>
-            ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", borderTop: "1px solid #f1f5f9", paddingTop: "12px", fontSize: "12px" }}>
+            <span style={{ fontSize: "10px", fontWeight: "700", color: "#64748b" }}>ROLES DEL MODELO</span>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>Oponente MIN:</span>
+              <span style={{ fontWeight: "bold", color: "#2563eb" }}>Ficha X (Humano)</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>Agente MAX:</span>
+              <span style={{ fontWeight: "bold", color: "#ea580c" }}>Ficha O (Algoritmo)</span>
+            </div>
           </div>
         </div>
 
-        {/* Banner de Estado Final */}
-        {winner && (
+        {/* TABLERO */}
+        <div style={{ flex: "1", minWidth: "320px", background: "#ffffff", padding: "20px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
+          <div style={{ fontWeight: "bold", color: "#1e293b", fontSize: "14px" }}>
+            {winner ? "Prueba Terminal Detectada" : `Horizonte Actual: Decisión de ${turn}`}
+          </div>
+
           <div style={{
-            ...S.card,
-            background: winner === "O" ? "#7F1D1D" : winner === "X" ? "#064E3B" : "#262626",
-            color: winner === "O" ? "#FEE2E2" : winner === "X" ? "#A7F3D0" : "#fff",
-            textAlign: "center"
+            display: "grid", gridTemplateColumns: "repeat(3, 95px)", gap: "4px", background: "#94a3b8", padding: "6px", borderRadius: "12px"
           }}>
-            <strong>
-              {winner === "O" ? "✗ ¡La IA ha ganado! Minimax es perfecto." :
-               winner === "X" ? "✓ ¡Increíble! Ganaste al algoritmo." : "⚖ ¡Empate perfecto!"}
-            </strong>
+            {board.map((cell, idx) => {
+              const score = cellScores[idx];
+              return (
+                <div
+                  key={idx} onClick={() => handleCellClick(idx)}
+                  style={{
+                    width: "95px", height: "95px", background: "#e2e4d4",
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    fontSize: "2.2rem", fontWeight: "bold", color: cell === "X" ? "#2563eb" : "#ea580c",
+                    cursor: cell === "" && !winner && !loading ? "pointer" : "default",
+                    position: "relative", userSelect: "none", boxSizing: "border-box"
+                  }}
+                >
+                  <span style={{ position: "absolute", top: "4px", left: "6px", fontSize: "10px", fontWeight: "700", color: "#94a3b8" }}>
+                    C_{idx}
+                  </span>
+
+                  {cell}
+                  
+                  {cell === "" && score !== undefined && !winner && (
+                    <span style={{ 
+                      position: "absolute", bottom: "4px", right: "6px", fontSize: "10px", fontWeight: "bold",
+                      color: score > 0 ? "#10b981" : score < 0 ? "#ef4444" : "#64748b" 
+                    }}>
+                      v = {score}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        )}
+
+          <button onClick={reiniciarJuego} disabled={loading} style={{ padding: "8px 18px", background: "#64748b", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer", fontSize: "12px", opacity: loading ? 0.6 : 1 }}>
+            ↺ Reiniciar Entorno
+          </button>
+        </div>
+
+        {/* PROCESO COGNITIVO CON HIGHLIGHT EN VERDE PARA LA DECISIÓN DE MAX */}
+        <div style={{ width: "320px", background: "#ffffff", padding: "20px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", gap: "10px" }}>
+          <span style={{ fontSize: "10px", fontWeight: "700", color: "#64748b", letterSpacing: "0.5px" }}>🧠 FLUJO OPERACIONAL DE DECISIÓN</span>
+          <div style={{ 
+            flex: 1, 
+            background: loading ? "#EEEDFE" : esDecisionIA ? "#f0fdf4" : "#f8fafc", 
+            border: loading ? "1px solid #534AB7" : esDecisionIA ? "1px solid #10b981" : "1px solid #e2e8f0", 
+            padding: "12px", borderRadius: "12px", 
+            fontSize: "12px", 
+            color: loading ? "#534AB7" : esDecisionIA ? "#14532d" : "#334155", 
+            fontFamily: "sans-serif", whiteSpace: "pre-line", lineHeight: "1.4", minHeight: "150px",
+            transition: "all 0.2s"
+          }}>
+            {iaThinking || "Construyendo el árbol de juego recursivo... Esperando transiciones en el espacio de estados."}
+          </div>
+        </div>
+
       </div>
+
+      {/* BANNER DE FIN DE JUEGO */}
+      {winner && (
+        <div style={{ background: winner === "Empate" ? "#f1f5f9" : winner === "X" ? "#dcfce7" : "#fee2e2", padding: "12px", borderRadius: "12px", textAlign: "center" }}>
+          <strong style={{ color: winner === "Empate" ? "#475569" : winner === "X" ? "#15803d" : "#991b1b", fontSize: "14px" }}>
+            {winner === "Empate" ? "⚖ Prueba Terminal: Nodo terminal neutro (v = 0). Asignación de suma cero exitosa." : `✓ Prueba Terminal: El espacio de estados se resolvió a favor del nodo (${winner === "X" ? "MIN" : "MAX"}).`}
+          </strong>
+        </div>
+      )}
+
+      {/* 🌳 ÁRBOL DE DECISIONES CRONOLÓGICO CRECIENTE */}
+      <div style={{ width: "100%", background: "#ffffff", padding: "24px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", gap: "16px" }}>
+        <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>
+          🌳 Despliegue Cronológico del Árbol de Juego (Raíces Históricas Permanente)
+        </div>
+        
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px", background: "#f8fafc", padding: "20px", borderRadius: "12px", border: "1px solid #e2e8f0", overflowX: "auto" }}>
+          {historicoArbol.map((nodo, index) => (
+            <div key={index} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", position: "relative" }}>
+              
+              {index > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "10px" }}>
+                  <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "bold", background: "#fff", padding: "2px 8px", borderRadius: "10px", border: "1px dashed #cbd5e1" }}>
+                    Acción elegida: {nodo.accionElegida}
+                  </div>
+                  <div style={{ width: "2px", height: "20px", borderLeft: "2px dashed #cbd5e1" }} />
+                </div>
+              )}
+
+              <div style={{ background: nodo.jugadorQueDecidio.includes("MAX") ? "#ea580c" : "#2563eb", color: "#fff", padding: "8px 16px", borderRadius: "8px", fontWeight: "bold", fontSize: "12px", boxShadow: "0 4px 8px rgba(0,0,0,0.1)", textAlign: "center", zIndex: 2 }}>
+                <div style={{ fontSize: "9px", opacity: 0.85 }}>RAÍZ EN TURNO {nodo.turno} ({nodo.jugadorQueDecidio})</div>
+                v = {nodo.valorRaiz}
+              </div>
+
+              {nodo.opcionesDisponibles.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
+                  <div style={{ width: "60%", height: "12px", borderLeft: "2px solid #e2e8f0", borderRight: "2px solid #e2e8f0", borderTop: "2px solid #e2e8f0", marginTop: "8px" }} />
+                  
+                  <div style={{ display: "flex", justifyContent: "center", gap: "14px", flexWrap: "wrap", marginTop: "-4px" }}>
+                    {nodo.opcionesDisponibles.map((hijo, hIdx) => {
+                      const esLaElegida = nodo.accionElegida === `C_${hijo.casilla}`;
+                      return (
+                        <div key={hIdx} style={{ background: esLaElegida ? "#f0fdf4" : "#ffffff", border: esLaElegida ? "2px solid #22c55e" : "1px solid #cbd5e1", borderRadius: "6px", padding: "4px 8px", fontSize: "11px", display: "flex", flexDirection: "column", alignItems: "center", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
+                          <span style={{ fontSize: "9px", color: "#64748b" }}>Hijo {hijo.casilla}</span>
+                          <span style={{ fontWeight: "bold", color: hijo.val > 0 ? "#10b981" : hijo.val < 0 ? "#ef4444" : "#475569" }}>v = {hijo.val}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
     </div>
   );
 }
