@@ -2,19 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 const API_URL = "http://127.0.0.1:8000"; 
 
-const S = {
-  card: { background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "14px 16px" },
-  btn: (active = false, primary = false) => ({
-    padding: "8px 18px", borderRadius: 8, border: primary ? "none" : "1px solid #333",
-    background: primary ? "#534AB7" : active ? "#262626" : "transparent",
-    color: "#fff", fontWeight: active || primary ? 600 : 400, fontSize: 13, cursor: "pointer", transition: "all .15s",
-  }),
-  label: { fontSize: 11, color: "#888", marginBottom: 4, fontWeight: 500, letterSpacing: ".04em", textTransform: "uppercase" },
-  statVal: { fontSize: 22, fontWeight: 600, color: "#81d4fa" },
-  th: { padding: "10px", textAlign: "left", borderBottom: "1px solid #333", color: "#888", fontSize: 12, fontWeight: 600 },
-  td: { padding: "10px", borderBottom: "1px solid #222", fontSize: 13, color: "#fff" }
-};
-
 export default function QueensViz() {
   const [numQueens, setNumQueens] = useState(8);
   const [isEditing, setIsEditing] = useState(true);
@@ -60,7 +47,6 @@ export default function QueensViz() {
     }
   }, [numQueens]);
 
-  // CONTROLADOR DE ANIMACIÓN CORREGIDO (STOP AL FINAL ESTRICTO)
   useEffect(() => {
     if (!running) {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -70,9 +56,9 @@ export default function QueensViz() {
     intervalRef.current = setInterval(() => {
       setStepIdx((prev) => {
         if (prev >= totalSteps - 1) {
-          setRunning(false); // Apagamos el reloj de inmediato
-          clearInterval(intervalRef.current); // Limpiamos el hilo de ejecución
-          return prev; // Mantenemos el último índice sin mover nada
+          setRunning(false); 
+          clearInterval(intervalRef.current); 
+          return prev; 
         }
         return prev + 1;
       });
@@ -128,27 +114,28 @@ export default function QueensViz() {
   const discoveredSteps = data?.steps ? data.steps.slice(0, stepIdx + 1) : [];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 1000, margin: "0 auto" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "24px", width: "100%", maxWidth: "1000px", margin: "0 auto", boxSizing: "border-box" }}>
       
-      {/* SECCIÓN SUPERIOR: TABLERO Y LOGS DE AUDITORÍA */}
-      <div style={{ display: "flex", gap: 24, flexWrap: "wrap", justifyContent: "center" }}>
+      {/* SECCIÓN SUPERIOR: TABLERO IZQUIERDA Y BITÁCORA DERECHA */}
+      <div style={{ display: "flex", gap: "24px", flexWrap: "wrap", justifyContent: "center" }}>
         
-        {/* TABLERO */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={{ display: "flex", gap: 16, alignItems: "center", fontSize: 13, justifyContent: "space-between" }}>
-            <label>N-Reinas: 
+        {/* COLUMNA IZQUIERDA: TABLERO */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div style={{ display: "flex", gap: "16px", alignItems: "center", fontSize: "13px", justifyContent: "space-between" }}>
+            <label style={{ color: "#334155", fontWeight: "600" }}>N-Reinas: 
               <input type="number" min="4" max="10" value={numQueens} 
                      onChange={(e) => setNumQueens(Number(e.target.value))} 
                      disabled={!isEditing}
-                     style={{ width: 50, padding: "4px 8px", marginLeft: 8, background: "#222", border: "1px solid #444", color: "#fff", borderRadius: 4 }} />
+                     style={{ width: "50px", padding: "4px 8px", marginLeft: "8px", background: "#f8fafc", border: "1px solid #cbd5e1", color: "#334155", borderRadius: "4px", fontWeight: "bold" }} />
             </label>
-            <span style={{ color: "#888" }}>
+            <span style={{ color: "#64748b", fontWeight: "500" }}>
               {isEditing ? `Acomodadas: ${queensPlaced} / ${numQueens}` : "Modo Análisis"}
             </span>
           </div>
 
+          {/* Cuadrícula Tablero */}
           <div style={{
-            display: "grid", gridTemplateColumns: `repeat(${numQueens}, minmax(40px, 55px))`, gap: 2, background: "#2a2a2a", padding: 6, borderRadius: 8,
+            display: "grid", gridTemplateColumns: `repeat(${numQueens}, minmax(40px, 55px))`, gap: "2px", background: "#94a3b8", padding: "6px", borderRadius: "8px",
           }}>
             {Array(numQueens).fill(null).map((_, row) => 
               Array(numQueens).fill(null).map((_, col) => {
@@ -157,16 +144,19 @@ export default function QueensViz() {
                 const isInConflict = hasQueen && activeConflicts.includes(col);
                 const isMovedCol = currentStep?.chosen_column === col;
 
+                let tileBg = isDark ? "#000000" : "#ffffff";
+                let tileBorder = "none";
+                if (isInConflict) { tileBg = "#7F1D1D"; tileBorder = "2.3px solid #EF4444"; }
+                else if (isMovedCol) { tileBg = "#1E3A8A"; tileBorder = "2.3px solid #3B82F6"; }
+
                 return (
                   <div 
                     key={`${row}-${col}`} onClick={() => handleTileClick(row, col)}
                     style={{
-                      aspectRatio: "1",
-                      background: isInConflict ? "#7F1D1D" : isMovedCol ? "#1E3A8A" : (isDark ? "#4B382A" : "#8B7355"),
-                      border: isInConflict ? "2.3px solid #EF4444" : isMovedCol ? "2.3px solid #3B82F6" : "none",
+                      aspectRatio: "1", background: tileBg, border: tileBorder,
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: numQueens > 8 ? "1.5rem" : "2rem", borderRadius: 2,
-                      cursor: isEditing ? "pointer" : "default", userSelect: "none"
+                      fontSize: numQueens > 8 ? "1.5rem" : "2rem", borderRadius: "2px",
+                      cursor: isEditing ? "pointer" : "default", userSelect: "none", boxSizing: "border-box"
                     }}
                   >
                     {hasQueen ? "👑" : ""}
@@ -176,154 +166,140 @@ export default function QueensViz() {
             )}
           </div>
 
-          {/* BOTONERA */}
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", maxWidth: 450 }}>
+          {/* BOTONERA EN MORADO */}
+          <div style={{ display: "flex", gap: "8px", background: "#1e293b", padding: "8px 16px", borderRadius: "30px", flexWrap: "wrap", maxWidth: "460px" }}>
             {isEditing ? (
               <>
-                <button style={S.btn(false, true)} onClick={handleCalculate} disabled={loading}>
+                <button onClick={handleCalculate} disabled={loading} style={{ padding: "8px 18px", background: "#534AB7", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer" }}>
                   {loading ? "Calculando..." : "▶ Calcular Hill Climbing"}
                 </button>
-                <button style={S.btn()} onClick={handleClearAll}>
-                  Base Limpia
+                <button onClick={handleClearAll} style={{ padding: "8px 18px", background: "#64748b", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer" }}>
+                  🧹 Limpiar Todo
                 </button>
               </>
             ) : (
               <>
-                {!running ? (
-                  <button style={S.btn(false, true)} onClick={() => setRunning(true)} disabled={stepIdx >= totalSteps - 1}>
-                    ▶ Iniciar Animación
-                  </button>
-                ) : (
-                  <button style={S.btn(false, false)} onClick={() => setRunning(false)}>
-                    ⏸ Pausar Animación
-                  </button>
-                )}
-                
-                <button style={S.btn()} onClick={() => setStepIdx(p => Math.max(p - 1, 0))} disabled={running || stepIdx <= 0}>
+                <button onClick={() => setRunning(!running)} disabled={stepIdx >= totalSteps - 1} style={{ padding: "8px 18px", background: "#534AB7", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer" }}>
+                  {running ? "⏸ Pausar Animación" : "▶ Iniciar Animación"}
+                </button>
+                <button onClick={() => setStepIdx(p => Math.max(p - 1, 0))} disabled={running || stepIdx <= 0} style={{ padding: "8px 18px", background: "#64748b", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer", opacity: (running || stepIdx <= 0) ? 0.5 : 1 }}>
                   ← Atrás
                 </button>
-                <button style={S.btn()} onClick={() => setStepIdx(p => Math.min(p + 1, totalSteps - 1))} disabled={running || stepIdx >= totalSteps - 1}>
+                <button onClick={() => setStepIdx(p => Math.min(p + 1, totalSteps - 1))} disabled={running || stepIdx >= totalSteps - 1} style={{ padding: "8px 18px", background: "#64748b", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer", opacity: (running || stepIdx >= totalSteps - 1) ? 0.5 : 1 }}>
                   Paso →
                 </button>
-                
-                <button style={S.btn()} onClick={handleBackToDesign} disabled={running}>
+                <button onClick={handleBackToDesign} disabled={running} style={{ padding: "8px 18px", background: "#cbd5e1", color: "#334155", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer" }}>
                   ✍ Reajustar
                 </button>
-                <button style={S.btn()} onClick={handleClearAll} disabled={running}>
-                  🧹 Borrar Todo
+                <button onClick={handleClearAll} disabled={running} style={{ padding: "8px 18px", background: "#f87171", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer" }}>
+                  Anular
                 </button>
               </>
             )}
           </div>
         </div>
 
-        {/* LOGS DE AUDITORÍA */}
-        <div style={{ flex: 1, minWidth: 280, display: "flex", flexDirection: "column", gap: 14 }}>
-          {error && <div style={{ ...S.card, background: "#FEF2F2", color: "#991B1B" }}>⚠ {error}</div>}
+        {/* COLUMNA DERECHA: LOGS Y METRICAS */}
+        <div style={{ flex: "1", minWidth: "280px", display: "flex", flexDirection: "column", gap: "14px" }}>
+          {error && <div style={{ background: "#fee2e2", border: "1px solid #fecaca", padding: "14px 16px", borderRadius: "16px", color: "#991b1b", fontSize: "13px" }}>⚠ {error}</div>}
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
-            <div style={S.card}><div style={S.label}>Movimiento Actual</div><div style={S.statVal}>{stepIdx < 0 ? "—" : `${stepIdx} / ${totalSteps - 1}`}</div></div>
-            <div style={{ ...S.card, background: currentStep?.attacks === 0 ? "#143A28" : "#1a1a1a" }}><div style={S.label}>Ataques Totales</div><div style={{ ...S.statVal, color: currentStep?.attacks === 0 ? "#5DCAA5" : "#EF9F27" }}>{currentStep ? currentStep.attacks : "—"}</div></div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px" }}>
+            <div style={{ background: "#ffffff", padding: "14px 16px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column" }}>
+              <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>Movimiento Actual</span>
+              <span style={{ fontSize: "22px", fontWeight: "600", color: "#534AB7", marginTop: "4px" }}>{stepIdx < 0 ? "—" : `${stepIdx} / ${totalSteps - 1}`}</span>
+            </div>
+            <div style={{ background: currentStep?.attacks === 0 ? "#dcfce7" : "#ffffff", padding: "14px 16px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", transition: "all 0.2s" }}>
+              <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>Ataques Totales</span>
+              <span style={{ fontSize: "22px", fontWeight: "600", color: currentStep?.attacks === 0 ? "#15803d" : "#ef4444", marginTop: "4px" }}>{currentStep ? currentStep.attacks : "—"}</span>
+            </div>
           </div>
 
           {data && stepIdx === totalSteps - 1 && (
-            <div style={{ ...S.card, background: data.success ? "#064E3B" : "#7F1D1D", color: data.success ? "#A7F3D0" : "#FEE2E2", borderColor: data.success ? "#047857" : "#991B1B", fontWeight: "bold" }}>
+            <div style={{ display: "flex", flexDirection: "column", background: data.success ? "#dcfce7" : "#fee2e2", padding: "14px 16px", borderRadius: "16px", border: data.success ? "1px solid #bbf7d0" : "1px solid #fecaca", color: data.success ? "#15803d" : "#991b1b", fontWeight: "bold", fontSize: "14px" }}>
               {data.success ? "✓ Meta alcanzada con 0 ataques mutuos." : "✗ Paro por Máximo Local (No hay mejoras posibles)."}
             </div>
           )}
 
-          <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-            <div style={S.label}>Bitácora Secuencial de Cambios</div>
-            <div style={{ ...S.card, background: "#111", maxHeight: 180, overflowY: "auto", fontFamily: "monospace", fontSize: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+          {/* BITÁCORA DE CAMBIOS */}
+          <div style={{ display: "flex", flexDirection: "column", flex: "1" }}>
+            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", marginBottom: "4px", textTransform: "uppercase" }}>Bitácora Secuencial de Cambios</span>
+            <div style={{ background: "#ffffff", padding: "14px 16px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", maxHeight: "180px", overflowY: "auto", fontFamily: "monospace", fontSize: "12px", display: "flex", flexDirection: "column", gap: "6px" }}>
               {!isEditing && discoveredSteps.length > 0 ? (
                 discoveredSteps.map((s, idx) => {
-                  const isLastDiscovered = idx === discoveredSteps.length - 1;
+                  const esUltimoLog = idx === discoveredSteps.length - 1;
                   return (
                     <div 
                       key={idx} 
                       style={{ 
-                        color: isLastDiscovered ? "#5DCAA5" : "#555", 
-                        fontWeight: isLastDiscovered ? "bold" : "normal",
-                        background: isLastDiscovered ? "rgba(93, 202, 165, 0.08)" : "transparent",
-                        padding: "4px 6px",
-                        borderRadius: 4,
-                        transition: "all 0.15s"
+                        color: esUltimoLog ? "#534AB7" : "#64748b", 
+                        fontWeight: esUltimoLog ? "bold" : "normal",
+                        background: esUltimoLog ? "#EEEDFE" : "transparent",
+                        padding: "4px 6px", borderRadius: "4px", transition: "all 0.15s"
                       }}
                     >
-                      {isLastDiscovered ? "➔" : "•"} [{s.step}] {s.message}
+                      {esUltimoLog ? "➔" : "•"} [{s.step}] {s.message}
                     </div>
                   );
                 })
               ) : (
-                <span style={{ color: "#444" }}>Coloca tu escenario base y corre el cálculo...</span>
+                <span style={{ color: "#94a3b8" }}>Coloca tu escenario base y corre el cálculo...</span>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* SECCIÓN INFERIOR: GRÁFICA Y TABLA */}
+      {/* SECCIÓN INFERIOR: GRÁFICA Y TABLA COMPLETA SIN SCROLL */}
       {!isEditing && data?.steps && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 24, marginTop: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "24px", marginTop: "12px" }}>
           
-          {/* GRÁFICA INTERACTIVA */}
-          <div style={{ ...S.card }}>
-            <div style={S.label}>Evolución de la Heurística (Descenso de Conflictos)</div>
-            <div style={{ display: "flex", alignItems: "flex-end", height: 140, gap: 4, background: "#111", padding: "20px 10px 10px 10px", borderRadius: 8, border: "1px solid #222", position: "relative", marginTop: 8 }}>
+          {/* GRÁFICA HEURÍSTICA */}
+          <div style={{ width: "100%", background: "#ffffff", padding: "24px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}>
+            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>📊 Comportamiento Heurístico (Descenso de Conflictos)</span>
+            <div style={{ display: "flex", alignItems: "flex-end", height: "140px", gap: "6px", background: "#f8fafc", padding: "20px 15px 15px 15px", borderRadius: "12px", border: "1px solid #e2e8f0", marginTop: "8px" }}>
               {data.steps.map((s, idx) => {
                 const isRevealed = idx <= stepIdx;
                 const heightPercentage = isRevealed ? (s.attacks / maxAttacksInRun) * 100 : 0;
                 const isCurrentBar = idx === stepIdx;
                 return (
                   <div key={idx} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", height: "100%", justifyContent: "flex-end" }}>
-                    <span style={{ fontSize: 9, color: isCurrentBar ? "#81d4fa" : "#555", fontWeight: isCurrentBar ? "bold" : "normal" }}>
+                    <span style={{ fontSize: "10px", color: isCurrentBar ? "#534AB7" : "#64748b", fontWeight: isCurrentBar ? "bold" : "normal", marginBottom: "2px" }}>
                       {isRevealed ? s.attacks : ""}
                     </span>
                     <div style={{ 
-                      width: "100%", 
-                      height: `${isRevealed ? Math.max(heightPercentage, 4) : 0}%`, 
-                      background: isCurrentBar ? "#81d4fa" : s.attacks === 0 ? "#5DCAA5" : "#332C74", 
-                      borderRadius: "3px 3px 0 0", 
-                      transition: "all 0.15s",
-                      opacity: isRevealed ? 1 : 0.1
+                      width: "100%", height: `${isRevealed ? Math.max(heightPercentage, 5) : 0}%`, 
+                      background: isCurrentBar ? "#534AB7" : s.attacks === 0 ? "#10b981" : "#cbd5e1", 
+                      borderRadius: "4px 4px 0 0", transition: "all 0.2s"
                     }} />
-                    <span style={{ fontSize: 9, color: isCurrentBar ? "#fff" : "#444", marginTop: 4 }}>M{s.step}</span>
+                    <span style={{ fontSize: "10px", color: isCurrentBar ? "#1e293b" : "#94a3b8", marginTop: "4px" }}>M{s.step}</span>
                   </div>
                 );
               })}
             </div>
           </div>
 
-          {/* TABLA DINÁMICA */}
-          <div style={{ ...S.card }}>
-            <div style={S.label}>Historial Analítico Dinámico (Matriz de Transición)</div>
-            <div style={{ background: "#111", borderRadius: 8, border: "1px solid #222", marginTop: 8 }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          {/* TABLA DE AUDITORÍA INTEGRAL IMPRESA */}
+          <div style={{ width: "100%", background: "#ffffff", padding: "24px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", gap: "14px" }}>
+            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>📋 Registro de Tránsito en Tiempo Real (Matriz de Solución)</span>
+            <div style={{ borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
                 <thead>
-                  <tr>
-                    <th style={S.th}>Mov</th>
-                    <th style={S.th}>Columna Modificada</th>
-                    <th style={S.th}>Vector de Estado [Y]</th>
-                    <th style={S.th}>Conflictos (F)</th>
+                  <tr style={{ background: "#f8fafc", borderBottom: "2px solid #e2e8f0" }}>
+                    <th style={{ padding: "12px 16px", width: "120px", textAlign: "left", color: "#475569" }}>Identificador</th>
+                    <th style={{ padding: "12px 16px", width: "160px", textAlign: "left", color: "#475569" }}>Modificación</th>
+                    <th style={{ padding: "12px 16px", textAlign: "left", color: "#475569" }}>Vector de Estado [Y]</th>
+                    <th style={{ padding: "12px 16px", width: "120px", textAlign: "center", color: "#475569" }}>Conflictos (F)</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {discoveredSteps.map((s, idx) => {
-                    const isLastRow = idx === discoveredSteps.length - 1;
+                  {discoveredSteps.map((s, i) => {
+                    const esUltimo = i === discoveredSteps.length - 1;
                     return (
-                      <tr key={idx} style={{ background: isLastRow ? "rgba(81, 212, 250, 0.12)" : "transparent", transition: "all 0.15s" }}>
-                        <td style={{ ...S.td, color: isLastRow ? "#81d4fa" : "#fff", fontWeight: isLastRow ? "bold" : "normal" }}>
-                          {s.step === 0 ? "Inicial" : `M${s.step}`}
-                        </td>
-                        <td style={S.td}>
-                          {s.chosen_column === -1 ? "Ninguna" : `Columna ${s.chosen_column}`}
-                        </td>
-                        <td style={{ ...S.td, fontFamily: "monospace", color: isLastRow ? "#fff" : "#aaa" }}>
-                          [{s.state.join(", ")}]
-                        </td>
-                        <td style={{ ...S.td, fontWeight: "bold", color: s.attacks === 0 ? "#5DCAA5" : "#EF9F27" }}>
-                          {s.attacks}
-                        </td>
+                      <tr key={i} style={{ borderBottom: "1px solid #f1f5f9", background: esUltimo ? "#EEEDFE" : "transparent", color: esUltimo ? "#534AB7" : "#334155", fontWeight: esUltimo ? "600" : "400", transition: "all 0.15s" }}>
+                        <td style={{ padding: "10px 16px", fontFamily: "monospace" }}>STEP_{String(s.step).padStart(3, '0')}</td>
+                        <td style={{ padding: "10px 16px" }}>{s.chosen_column === -1 ? "Escenario Inicial" : `Mover Columna ${s.chosen_column}`}</td>
+                        <td style={{ padding: "10px 16px", fontFamily: "monospace", letterSpacing: "0.5px" }}>[{s.state.join(", ")}]</td>
+                        <td style={{ padding: "10px 16px", textAlign: "center", fontWeight: "bold", color: s.attacks === 0 ? "#10b981" : esUltimo ? "#534AB7" : "#475569" }}>{s.attacks}</td>
                       </tr>
                     );
                   })}
