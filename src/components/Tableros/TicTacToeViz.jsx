@@ -66,38 +66,43 @@ export default function TicTacToeViz() {
 
   const realizarTurnoIA = async (tableroConX) => {
     setLoading(true);
-    setIaThinking("🧠 Computando ramas del árbol...\nMAX (O) está aplicando Backtracking recursivo sobre los estados sucesores.");
+    setIaThinking("ANALIZANDO:\nMAX (O) esta aplicando Backtracking recursivo sobre los estados sucesores de la raiz.");
     
     const data = await consultarMinimax(tableroConX);
     
     if (data && data.best_move !== -1) {
-      const nuevoTablero = [...tableroConX];
-      nuevoTablero[data.best_move] = "O";
-      setBoard(nuevoTablero);
-      setCellScores(data.scores);
-      
-      const valorElegido = data.scores[data.best_move];
-      
-      const ramasEvaluadas = Object.keys(data.scores).map(key => ({
-        casilla: key,
-        val: data.scores[key]
-      }));
+      setTimeout(() => {
+        const nuevoTablero = [...tableroConX];
+        nuevoTablero[data.best_move] = "O";
+        setBoard(nuevoTablero);
+        setCellScores(data.scores);
+        
+        const valorElegido = data.scores[data.best_move];
+        
+        const ramasEvaluadas = Object.keys(data.scores).map(key => ({
+          casilla: key,
+          val: data.scores[key]
+        }));
 
-      setHistoricoArbol(prev => [...prev, {
-        turno: prev.length,
-        jugadorQueDecidio: "MAX (O)",
-        valorRaiz: valorElegido,
-        accionElegida: `C_${data.best_move}`,
-        opcionesDisponibles: ramasEvaluadas
-      }]);
+        setHistoricoArbol(prev => [...prev, {
+          turno: prev.length,
+          jugadorQueDecidio: "MAX (O)",
+          valorRaiz: valorElegido,
+          accionElegida: `C_${data.best_move}`,
+          opcionesDisponibles: ramasEvaluadas
+        }]);
 
-      interpretarPensamiento(data.best_move, data.scores);
+        interpretarPensamiento(data.best_move, data.scores);
 
-      const campoGanador = verificarGanadorLocal(nuevoTablero);
-      if (campoGanador) setWinner(campoGanador);
-      else setTurn("MIN (X)");
+        const campoGanador = verificarGanadorLocal(nuevoTablero);
+        if (campoGanador) setWinner(campoGanador);
+        else setTurn("MIN (X)");
+        
+        setLoading(false);
+      }, 600);
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const actualizarAsistente = async (tableroBase, proximoJugador) => {
@@ -105,29 +110,21 @@ export default function TicTacToeViz() {
     const data = await consultarMinimax(tableroBase);
     if (data) {
       setCellScores(data.scores);
-      const valores = Object.values(data.scores);
-      if (valores.length > 0) {
-        const esMax = proximoJugador.includes("MAX");
-        const mejorValor = esMax ? Math.max(...valores) : Math.min(...valores);
-        const sugerencia = Object.keys(data.scores).find(key => data.scores[key] === mejorValor);
-        
-        setIaThinking(`Modelo Formal de Decisión:\nTurno de ${proximoJugador}.\nEl criterio de selección sugiere expandir la acción [C_${sugerencia}] con función de utilidad v = (${mejorValor}).`);
-      }
     }
     setLoading(false);
   };
 
   const interpretarPensamiento = (movimiento, puntuaciones) => {
     const valorElegido = puntuaciones[movimiento];
-    let explicacion = `Cómputo de Función de Utilidad:\n`;
-    explicacion += `MAX (O) seleccionó la casilla C_${movimiento} aplicando un criterio de maximización pura con v = (${valorElegido}).\n\n`;
+    let explicacion = `Computo de Funcion de Utilidad:\n`;
+    explicacion += `MAX (O) selecciono la casilla C_${movimiento} aplicando un criterio de maximizacion pura con v = (${valorElegido}).\n\n`;
     
     if (valorElegido > 0) {
-      explicacion += `➔ Diagnóstico: Estrategia de Maximización. MAX detectó un camino libre hacia un nodo terminal ganador (+10).`;
+      explicacion += `-> Diagnostico: Estrategia de Maximizacion. MAX detecto un camino libre hacia un nodo terminal ganador (+10).`;
     } else if (valorElegido < 0) {
-      explicacion += `➔ Diagnóstico: Contención defensiva. MIN forzó la reducción de la utilidad general, obligando a MAX a mitigar daños.`;
+      explicacion += `-> Diagnostico: Contencion defensiva. MIN forzo la reduccion de la utilidad general, obligando a MAX a mitigar danos.`;
     } else {
-      explicacion += `➔ Diagnóstico: Equilibrio perfecto. Ambos agentes juegan con racionalidad perfecta (v = 0).`;
+      explicacion += `-> Diagnostico: Equilibrio perfecto. Ambos agentes juegan con racionalidad perfecta (v = 0).`;
     }
     setIaThinking(explicacion);
   };
@@ -196,8 +193,37 @@ export default function TicTacToeViz() {
     }
   };
 
-  // Detectar si la cadena de texto actual representa una decisión de la IA para cambiarle el color
-  const esDecisionIA = iaThinking.includes("MAX (O) seleccionó");
+  // Manejo de estilos dinamicos de la caja en base al modo y turno
+  const esDecisionIA = gameMode === "vs_ia" && iaThinking.includes("MAX (O) selecciono");
+  const esTurnoApoyado = gameMode === "humano_asistido" && turn === "MAX (O)"; 
+
+  let boxBg = "#f8fafc";
+  let boxBorder = "1px solid #e2e8f0";
+  let boxColor = "#334155";
+  let textContent = iaThinking || "Construyendo el arbol de juego recursivo... Esperando transiciones en el espacio de estados.";
+
+  if (loading) {
+    boxBg = "#EEEDFE";
+    boxBorder = "1px solid #534AB7";
+    boxColor = "#534AB7";
+    textContent = "[Procesando Espacio de Estados...]";
+  } else if (gameMode === "vs_ia" && esDecisionIA) {
+    boxBg = "#f0fdf4";
+    boxBorder = "1px solid #10b981";
+    boxColor = "#14532d";
+  } else if (gameMode === "humano_asistido" && !winner) {
+    if (esTurnoApoyado) {
+      boxBg = "#f0fdf4";
+      boxBorder = "1px solid #10b981";
+      boxColor = "#14532d";
+      textContent = "[Estrategia con Soporte Algoritmico Activo]";
+    } else {
+      boxBg = "#fee2e2";
+      boxBorder = "1px solid #ef4444";
+      boxColor = "#991b1b";
+      textContent = "[Estrategia sin Soporte Algoritmico Activo]";
+    }
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box" }}>
@@ -209,10 +235,10 @@ export default function TicTacToeViz() {
         <div style={{ width: "280px", background: "#ffffff", padding: "20px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "16px" }}>
           <div>
             <h3 style={{ margin: "0 0 12px 0", color: "#1e293b", fontSize: "16px", borderBottom: "2px solid #f1f5f9", paddingBottom: "8px", fontWeight: "bold" }}>
-              Árbol de Búsqueda
+              Arbol de Busqueda
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <span style={{ fontSize: "10px", fontWeight: "700", color: "#64748b", letterSpacing: "0.5px" }}>MODELO DE TRANSICIÓN</span>
+              <span style={{ fontSize: "10px", fontWeight: "700", color: "#64748b", letterSpacing: "0.5px" }}>MODELO DE TRANSICION</span>
               <button 
                 onClick={() => cambiarModo("vs_ia")}
                 disabled={loading}
@@ -252,7 +278,7 @@ export default function TicTacToeViz() {
         {/* TABLERO */}
         <div style={{ flex: "1", minWidth: "320px", background: "#ffffff", padding: "20px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
           <div style={{ fontWeight: "bold", color: "#1e293b", fontSize: "14px" }}>
-            {winner ? "Prueba Terminal Detectada" : `Horizonte Actual: Decisión de ${turn}`}
+            {winner ? "Prueba Terminal Detectada" : `Horizonte Actual: Decision de ${turn}`}
           </div>
 
           <div style={{
@@ -291,24 +317,25 @@ export default function TicTacToeViz() {
           </div>
 
           <button onClick={reiniciarJuego} disabled={loading} style={{ padding: "8px 18px", background: "#64748b", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer", fontSize: "12px", opacity: loading ? 0.6 : 1 }}>
-            ↺ Reiniciar Entorno
+            Limpiar Entorno
           </button>
         </div>
 
-        {/* PROCESO COGNITIVO CON HIGHLIGHT EN VERDE PARA LA DECISIÓN DE MAX */}
+        {/* PROCESO COGNITIVO - PANEL DINÁMICO RECONFIGURADO */}
         <div style={{ width: "320px", background: "#ffffff", padding: "20px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", gap: "10px" }}>
-          <span style={{ fontSize: "10px", fontWeight: "700", color: "#64748b", letterSpacing: "0.5px" }}>🧠 FLUJO OPERACIONAL DE DECISIÓN</span>
+          <span style={{ fontSize: "10px", fontWeight: "700", color: "#64748b", letterSpacing: "0.5px" }}>FLUJO OPERACIONAL DE DECISION</span>
           <div style={{ 
             flex: 1, 
-            background: loading ? "#EEEDFE" : esDecisionIA ? "#f0fdf4" : "#f8fafc", 
-            border: loading ? "1px solid #534AB7" : esDecisionIA ? "1px solid #10b981" : "1px solid #e2e8f0", 
+            background: boxBg, 
+            border: boxBorder, 
             padding: "12px", borderRadius: "12px", 
             fontSize: "12px", 
-            color: loading ? "#534AB7" : esDecisionIA ? "#14532d" : "#334155", 
+            color: boxColor, 
             fontFamily: "sans-serif", whiteSpace: "pre-line", lineHeight: "1.4", minHeight: "150px",
-            transition: "all 0.2s"
+            transition: "all 0.2s",
+            fontWeight: (gameMode === "humano_asistido" || loading) ? "bold" : "normal"
           }}>
-            {iaThinking || "Construyendo el árbol de juego recursivo... Esperando transiciones en el espacio de estados."}
+            {textContent}
           </div>
         </div>
 
@@ -318,15 +345,15 @@ export default function TicTacToeViz() {
       {winner && (
         <div style={{ background: winner === "Empate" ? "#f1f5f9" : winner === "X" ? "#dcfce7" : "#fee2e2", padding: "12px", borderRadius: "12px", textAlign: "center" }}>
           <strong style={{ color: winner === "Empate" ? "#475569" : winner === "X" ? "#15803d" : "#991b1b", fontSize: "14px" }}>
-            {winner === "Empate" ? "⚖ Prueba Terminal: Nodo terminal neutro (v = 0). Asignación de suma cero exitosa." : `✓ Prueba Terminal: El espacio de estados se resolvió a favor del nodo (${winner === "X" ? "MIN" : "MAX"}).`}
+            {winner === "Empate" ? "Prueba Terminal: Nodo terminal neutro (v = 0). Asignacion de suma cero exitosa." : `Prueba Terminal: El espacio de estados se resolvio a favor del nodo (${winner === "X" ? "MIN" : "MAX"}).`}
           </strong>
         </div>
       )}
 
-      {/* 🌳 ÁRBOL DE DECISIONES CRONOLÓGICO CRECIENTE */}
+      {/* ÁRBOL DE DECISIONES CRONOLÓGICO CRECIENTE */}
       <div style={{ width: "100%", background: "#ffffff", padding: "24px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", gap: "16px" }}>
         <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>
-          🌳 Despliegue Cronológico del Árbol de Juego (Raíces Históricas Permanente)
+          Arbol de Juego (Raices Historicas Permanente)
         </div>
         
         <div style={{ display: "flex", flexDirection: "column", gap: "20px", background: "#f8fafc", padding: "20px", borderRadius: "12px", border: "1px solid #e2e8f0", overflowX: "auto" }}>
@@ -336,14 +363,14 @@ export default function TicTacToeViz() {
               {index > 0 && (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "10px" }}>
                   <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "bold", background: "#fff", padding: "2px 8px", borderRadius: "10px", border: "1px dashed #cbd5e1" }}>
-                    Acción elegida: {nodo.accionElegida}
+                    Accion elegida: {nodo.accionElegida}
                   </div>
                   <div style={{ width: "2px", height: "20px", borderLeft: "2px dashed #cbd5e1" }} />
                 </div>
               )}
 
               <div style={{ background: nodo.jugadorQueDecidio.includes("MAX") ? "#ea580c" : "#2563eb", color: "#fff", padding: "8px 16px", borderRadius: "8px", fontWeight: "bold", fontSize: "12px", boxShadow: "0 4px 8px rgba(0,0,0,0.1)", textAlign: "center", zIndex: 2 }}>
-                <div style={{ fontSize: "9px", opacity: 0.85 }}>RAÍZ EN TURNO {nodo.turno} ({nodo.jugadorQueDecidio})</div>
+                <div style={{ fontSize: "9px", opacity: 0.85 }}>RAIZ EN TURNO {nodo.turno} ({nodo.jugadorQueDecidio})</div>
                 v = {nodo.valorRaiz}
               </div>
 

@@ -40,7 +40,7 @@ export default function QueensViz() {
       setStepIdx(0); 
       return json;
     } catch (e) {
-      setError("Error conectando con el servidor Python.");
+      setError("Error de conexión con el servidor resolutor en Python.");
       return null;
     } finally {
       setLoading(false);
@@ -78,7 +78,7 @@ export default function QueensViz() {
 
   const handleCalculate = async () => {
     if (queensPlaced < numQueens) {
-      setError(`Por favor coloca las ${numQueens} reinas antes de ejecutar.`);
+      setError(`Se requiere posicionar las ${numQueens} unidades antes de proceder con la ejecución.`);
       return;
     }
     setIsEditing(false);
@@ -129,7 +129,7 @@ export default function QueensViz() {
                      style={{ width: "50px", padding: "4px 8px", marginLeft: "8px", background: "#f8fafc", border: "1px solid #cbd5e1", color: "#334155", borderRadius: "4px", fontWeight: "bold" }} />
             </label>
             <span style={{ color: "#64748b", fontWeight: "500" }}>
-              {isEditing ? `Acomodadas: ${queensPlaced} / ${numQueens}` : "Modo Análisis"}
+              {isEditing ? `Asignadas: ${queensPlaced} / ${numQueens}` : "Modo Análisis Lineal"}
             </span>
           </div>
 
@@ -144,22 +144,32 @@ export default function QueensViz() {
                 const isInConflict = hasQueen && activeConflicts.includes(col);
                 const isMovedCol = currentStep?.chosen_column === col;
 
-                let tileBg = isDark ? "#000000" : "#ffffff";
+                let tileBg = isDark ? "#1e293b" : "#f1f5f9";
+                let tileColor = isDark ? "#ffffff" : "#000000";
                 let tileBorder = "none";
-                if (isInConflict) { tileBg = "#7F1D1D"; tileBorder = "2.3px solid #EF4444"; }
-                else if (isMovedCol) { tileBg = "#1E3A8A"; tileBorder = "2.3px solid #3B82F6"; }
+                
+                if (isInConflict) { 
+                  tileBg = "#7F1D1D"; 
+                  tileColor = "#ffffff";
+                  tileBorder = "2.3px solid #EF4444"; 
+                } else if (isMovedCol) { 
+                  tileBg = "#1E3A8A"; 
+                  tileColor = "#ffffff";
+                  tileBorder = "2.3px solid #3B82F6"; 
+                }
 
                 return (
                   <div 
                     key={`${row}-${col}`} onClick={() => handleTileClick(row, col)}
                     style={{
-                      aspectRatio: "1", background: tileBg, border: tileBorder,
+                      aspectRatio: "1", background: tileBg, border: tileBorder, color: tileColor,
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: numQueens > 8 ? "1.5rem" : "2rem", borderRadius: "2px",
-                      cursor: isEditing ? "pointer" : "default", userSelect: "none", boxSizing: "border-box"
+                      fontSize: numQueens > 8 ? "1.8rem" : "2.4rem", borderRadius: "2px",
+                      cursor: isEditing ? "pointer" : "default", userSelect: "none", boxSizing: "border-box",
+                      lineHeight: 0
                     }}
                   >
-                    {hasQueen ? "👑" : ""}
+                    {hasQueen ? "♕" : ""}
                   </div>
                 );
               })
@@ -171,25 +181,25 @@ export default function QueensViz() {
             {isEditing ? (
               <>
                 <button onClick={handleCalculate} disabled={loading} style={{ padding: "8px 18px", background: "#534AB7", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer" }}>
-                  {loading ? "Calculando..." : "▶ Calcular Hill Climbing"}
+                  {loading ? "Calculando..." : "Calcular Hill Climbing"}
                 </button>
                 <button onClick={handleClearAll} style={{ padding: "8px 18px", background: "#64748b", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer" }}>
-                  🧹 Limpiar Todo
+                  Limpiar Todo
                 </button>
               </>
             ) : (
               <>
                 <button onClick={() => setRunning(!running)} disabled={stepIdx >= totalSteps - 1} style={{ padding: "8px 18px", background: "#534AB7", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer" }}>
-                  {running ? "⏸ Pausar Animación" : "▶ Iniciar Animación"}
+                  {running ? "Pausar Animación" : "Iniciar Animación"}
                 </button>
                 <button onClick={() => setStepIdx(p => Math.max(p - 1, 0))} disabled={running || stepIdx <= 0} style={{ padding: "8px 18px", background: "#64748b", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer", opacity: (running || stepIdx <= 0) ? 0.5 : 1 }}>
-                  ← Atrás
+                  Atrás
                 </button>
                 <button onClick={() => setStepIdx(p => Math.min(p + 1, totalSteps - 1))} disabled={running || stepIdx >= totalSteps - 1} style={{ padding: "8px 18px", background: "#64748b", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer", opacity: (running || stepIdx >= totalSteps - 1) ? 0.5 : 1 }}>
-                  Paso →
+                  Paso
                 </button>
                 <button onClick={handleBackToDesign} disabled={running} style={{ padding: "8px 18px", background: "#cbd5e1", color: "#334155", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer" }}>
-                  ✍ Reajustar
+                  Reajustar
                 </button>
                 <button onClick={handleClearAll} disabled={running} style={{ padding: "8px 18px", background: "#f87171", color: "white", border: "none", borderRadius: "20px", fontWeight: "bold", cursor: "pointer" }}>
                   Anular
@@ -201,7 +211,7 @@ export default function QueensViz() {
 
         {/* COLUMNA DERECHA: LOGS Y METRICAS */}
         <div style={{ flex: "1", minWidth: "280px", display: "flex", flexDirection: "column", gap: "14px" }}>
-          {error && <div style={{ background: "#fee2e2", border: "1px solid #fecaca", padding: "14px 16px", borderRadius: "16px", color: "#991b1b", fontSize: "13px" }}>⚠ {error}</div>}
+          {error && <div style={{ background: "#fee2e2", border: "1px solid #fecaca", padding: "14px 16px", borderRadius: "16px", color: "#991b1b", fontSize: "13px" }}>Error: {error}</div>}
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px" }}>
             <div style={{ background: "#ffffff", padding: "14px 16px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column" }}>
@@ -216,7 +226,7 @@ export default function QueensViz() {
 
           {data && stepIdx === totalSteps - 1 && (
             <div style={{ display: "flex", flexDirection: "column", background: data.success ? "#dcfce7" : "#fee2e2", padding: "14px 16px", borderRadius: "16px", border: data.success ? "1px solid #bbf7d0" : "1px solid #fecaca", color: data.success ? "#15803d" : "#991b1b", fontWeight: "bold", fontSize: "14px" }}>
-              {data.success ? "✓ Meta alcanzada con 0 ataques mutuos." : "✗ Paro por Máximo Local (No hay mejoras posibles)."}
+              {data.success ? "Meta alcanzada con 0 ataques mutuos." : "Paro por Máximo Local (No hay mejoras heurísticas posibles)."}
             </div>
           )}
 
@@ -237,12 +247,12 @@ export default function QueensViz() {
                         padding: "4px 6px", borderRadius: "4px", transition: "all 0.15s"
                       }}
                     >
-                      {esUltimoLog ? "➔" : "•"} [{s.step}] {s.message}
+                      {esUltimoLog ? "->" : "•"} [{s.step}] {s.message}
                     </div>
                   );
                 })
               ) : (
-                <span style={{ color: "#94a3b8" }}>Coloca tu escenario base y corre el cálculo...</span>
+                <span style={{ color: "#94a3b8" }}>Establezca el escenario base e inicie el cálculo métrico.</span>
               )}
             </div>
           </div>
@@ -255,7 +265,7 @@ export default function QueensViz() {
           
           {/* GRÁFICA HEURÍSTICA */}
           <div style={{ width: "100%", background: "#ffffff", padding: "24px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}>
-            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>📊 Comportamiento Heurístico (Descenso de Conflictos)</span>
+            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>Comportamiento Heurístico (Descenso de Conflictos)</span>
             <div style={{ display: "flex", alignItems: "flex-end", height: "140px", gap: "6px", background: "#f8fafc", padding: "20px 15px 15px 15px", borderRadius: "12px", border: "1px solid #e2e8f0", marginTop: "8px" }}>
               {data.steps.map((s, idx) => {
                 const isRevealed = idx <= stepIdx;
@@ -280,7 +290,7 @@ export default function QueensViz() {
 
           {/* TABLA DE AUDITORÍA INTEGRAL IMPRESA */}
           <div style={{ width: "100%", background: "#ffffff", padding: "24px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", gap: "14px" }}>
-            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>📋 Registro de Tránsito en Tiempo Real (Matriz de Solución)</span>
+            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>Registro de Tránsito en Tiempo Real (Matriz de Solución)</span>
             <div style={{ borderRadius: "8px", border: "1px solid #e2e8f0" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
                 <thead>
