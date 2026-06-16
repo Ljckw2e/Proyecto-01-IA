@@ -58,7 +58,7 @@ ORBITAL-ORBIT/
 
 Sección para poner tus datos académicos:
 * **Alumnos:** Jairo Andrey Arrollo García
-               Laila Jocelyn Rodríguez Martínez
+               y Laila Jocelyn Rodríguez Martínez
 * **Institución:** Instituto Politécnico Nacional. Escuela Superior de Cómputo.
 * **Asignatura:** Inteligencia Artificial
 * **Grupo:** 6CM1
