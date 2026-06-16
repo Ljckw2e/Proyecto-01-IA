@@ -18,41 +18,18 @@ Este es el repositorio del proyecto final de la materia de Inteligencia Artifici
 
 ## 📋 Requisitos Previos
 
-Antes de comenzar, asegúrate de tener instalado lo siguiente en tu equipo:
+Para simplificar el despliegue del entorno y evitar la ejecución manual de múltiples terminales, el proyecto cuenta con un script de automatización para Windows (.bat).
 
-* **Node.js:** Versión `18.x` o superior recomendada.
-* **Gestor de paquetes:** `pnpm` (puedes instalarlo con `npm install -g pnpm` si aún no lo tienes).
+* Tener instalado Node.js y las dependencias de Astro (npm install).
+* Tener instalado Python junto con el servidor de la API (pip install fastapi uvicorn o las dependencias de tu proyecto).
 
----
-
-## 🚀 Instalación y Configuración
-
-Sigue estos pasos para clonar el proyecto e instalar las dependencias correctamente:
-
-### 1. Clonar el repositorio e ingresar a la carpeta
-```bash
-git https://github.com/Ljckw2e/Proyecto-01-IA
-cd [Tu-ruta]
-```
-
-### 2. Instala dependencias
-Instala todos los modulos definidos en el `package.json` usando `pnpm`:
-```bash
-pnpm install
-```
-
-
-## 3. Ejecución en Entorno de Desarrollo
-Para iniciar un servidor de desarrollo local de Astro, ejecute el siguiente comando:
-```bash
-npm run dev
-```
-Por defecto, Astro intentará levantar el entorno en el puerto `4321` .
-Si requieres forzar a Astro a correr específicamente en otro puerto utiliza:
-```bash
-npm dev --port [####]
-```
-
+## Instrucciones de Ejecución
+* Localiza el archivo iniciar_proyecto.bat en la raíz del proyecto.
+* Dale doble clic para ejecutarlo.
+* El script abrirá automáticamente dos ventanas de comandos en paralelo:
+    Una ventana levantando la API de Python en el puerto 8000.
+    Otra ventana levantando el entorno local de desarrollo de Astro.
+* Abre tu navegador e ingresa a la dirección local que te indique Astro (normalmente http://localhost:4321).
 
 ## 📁 Estructura principal del proyecto
 ```text
