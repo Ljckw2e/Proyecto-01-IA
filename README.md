@@ -8,11 +8,11 @@ Este es el repositorio del proyecto final de la materia de Inteligencia Artifici
 
 * **Framework Principal:** [Astro](https://astro.build/) (Configurado en modo Server-Side Rendering - SSR)
 * **Librería de Interfaz:** [React](https://react.dev/) (Integrado en islas de interactividad)
+* **Estilos Visuales:** [Inline Styles](CSS Nativo mediante Estilos en Línea)
 
-* **Estilos:** [Tailwind CSS](https://tailwindcss.com/)
-* **Animaciones:** [GSAP (GreenSock Animation Platform)](https://gsap.com/)
-* **Manejo de Gráficos:** [Recharts](https://recharts.org/)
-* **Iconografía:** [Lucide React](https://lucide.dev/)
+**Lenguaje:** [Python 3](https://www.python.org/) (ideal para el procesamiento y manipulación de estructuras de datos complejas).
+* **Framework API:** [FastAPI](https://fastapi.tiangolo.com/) / [Flask] (encargado de exponer los endpoints que procesan las matrices de los entornos).
+* **Algoritmos Implementados:** * **Búsqueda No Informada:** BFS (Breadth-First Search) y DFS (Depth-First Search) para la resolución de Frozen Lake.
 
 ---
 
@@ -55,10 +55,20 @@ npm dev --port [####]
 
 
 ## 📁 Estructura principal del proyecto
-La arquitectura del código está modularizada para facilitar el mantenimiento y la inyección asíncrona de datos:
-```Estructura
-
-```
+```text
+ORBITAL-ORBIT/
+├── 📁 public/
+├── 📁 src/
+│   ├── 📁 components/
+│   │   └── 📁 Tableros/
+│   │       ├── 📄 FrozenLake.astro
+│   │       ├── 📄 FrozenLakeViz.jsx
+│   │       ├── 📄 Sokoban.astro
+│   │       └── 📄 SokobanViz.jsx
+├── 📄 iniciar_proyecto.bat    <-- Script de automatización (Windows)
+├── 📄 main.py                 <-- API Backend (FastAPI / Flask)
+├── 📄 package.json            <-- Configuración de Astro
+└── 📄 README.md
 
 
 ## Documentación de ASTRO
