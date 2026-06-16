@@ -1,15 +1,15 @@
 ---
 import Layout from '../layouts/Layout.astro';
-// Importamos tus componentes de React
 import FrozenLakeViz from '../components/FrozenLakeViz.jsx';
 import SokobanViz from '../components/Tableros/SokobanViz.jsx';
-import QueensViz from '../components/Tableros/QueensViz'; // <-- 1. Importar el nuevo
+import QueensViz from '../components/Tableros/QueensViz.jsx';
+import TicTacToeViz from '../components/Tableros/TicTacToeViz.jsx'; // <-- 1. Importas el nuevo componente
 ---
 
 <Layout title="Módulos de Inteligencia Artificial">
   <nav class="top-navbar">
     <div class="nav-logo">
-      Algoritmos de Búsqueda
+      Inteligencia Artificial - Algoritmos de Búsqueda
     </div>
     <div class="nav-tabs">
       <button class="tab-btn active" data-target="view-frozen">
@@ -21,7 +21,7 @@ import QueensViz from '../components/Tableros/QueensViz'; // <-- 1. Importar el 
       <button class="tab-btn" data-target="view-queens">
         Búsqueda Local (8 Reinas)
       </button>
-      <button class="tab-btn disabled" disabled>
+      <button class="tab-btn" data-target="view-gato">
         Búsqueda Adversaria (Gato)
       </button>
     </div>
@@ -39,6 +39,10 @@ import QueensViz from '../components/Tableros/QueensViz'; // <-- 1. Importar el 
 
     <div id="view-queens" class="problem-view hidden">
       <QueensViz client:load />
+    </div>
+
+    <div id="view-gato" class="problem-view hidden">
+      <TicTacToeViz client:load />
     </div>
 
   </main>
