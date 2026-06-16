@@ -47,6 +47,8 @@ ORBITAL-ORBIT/
 │   │       ├── 📄 FrozenLakeViz.jsx
 │   │       ├── 📄 Sokoban.astro
 │   │       └── 📄 SokobanViz.jsx
+│   │       └── 📄 QueensViz.jsx
+│   │       └── 📄 TicTacToeViz.jsx
 ├── 📄 iniciar_proyecto.bat    <-- Script de automatización (Windows)
 ├── 📄 main.py                 <-- API Backend (FastAPI / Flask)
 ├── 📄 package.json            <-- Configuración de Astro
