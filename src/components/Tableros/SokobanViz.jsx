@@ -242,7 +242,7 @@ export default function SokobanViz() {
               { type: 'T', label: "Zona de Depósito" },
               { type: 'B', label: "Unidad de Carga" },
               { type: 'X', label: "Carga Asegurada" },
-              { type: 'P', label: "Operario Asignado" }
+              { type: 'P', label: "Operario" }
             ].map((item) => (
               <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "13px", color: "#334155" }}>
                 <div style={{ width: "36px", height: "36px", background: item.type === 'W' ? 'transparent' : "#e2e8f0", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
