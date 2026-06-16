@@ -4,10 +4,10 @@ const API_URL = "http://127.0.0.1:8000";
 
 // Colores unificados para los estados de búsqueda
 const STATE_COLOR = {
-  current:  "#D85A30",  // Naranja para el nodo expandiéndose ahora
-  path:     "#4CAF50",  // Verde para el camino óptimo final
-  frontier: "#AFA9EC",  // Morado para los nodos en la cola (Frontera)
-  visited:  "#CECBF6",  // Azul/Violeta para los ya explorados
+  current:  "#D85A30",  // Naranja --> nodo expandiéndose ahora
+  path:     "#4CAF50",  // Verde --> el camino óptimo final
+  frontier: "#AFA9EC",  // Morado --> nodos en la cola (Frontera)
+  visited:  "#CECBF6",  // Azul/Violeta --> ya explorados
 };
 
 export default function FrozenLakeViz() {
