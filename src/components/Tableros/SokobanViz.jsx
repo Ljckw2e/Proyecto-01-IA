@@ -318,7 +318,7 @@ export default function SokobanViz() {
       {/* SECCIÓN INFERIOR: TABLA TÉCNICA DE AUDITORÍA */}
       <div style={{ width: "100%", background: "#ffffff", padding: "24px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", gap: "14px" }}>
         <h4 style={{ margin: "0", color: "#1e293b", fontSize: "14px", fontWeight: "700", letterSpacing: "0.5px" }}>
-          📊 REGISTRO DE TRÁNSITO EN TIEMPO REAL
+          REGISTRO DE TRÁNSITO EN TIEMPO REAL
         </h4>
         <div ref={tableContainerRef} style={{ maxHeight: "220px", overflowY: "auto", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
