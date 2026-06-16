@@ -10,7 +10,7 @@ Este es el repositorio del proyecto final de la materia de Inteligencia Artifici
 * **Librería de Interfaz:** [React](https://react.dev/) (Integrado en islas de interactividad)
 * **Estilos Visuales:** [Inline Styles](CSS Nativo mediante Estilos en Línea)
 
-**Lenguaje:** [Python 3](https://www.python.org/) (ideal para el procesamiento y manipulación de estructuras de datos complejas).
+* **Lenguaje:** [Python 3](https://www.python.org/) (ideal para el procesamiento y manipulación de estructuras de datos complejas).
 * **Framework API:** [FastAPI](https://fastapi.tiangolo.com/) / [Flask] (encargado de exponer los endpoints que procesan las matrices de los entornos).
 * **Algoritmos Implementados:** * **Búsqueda No Informada:** BFS (Breadth-First Search) y DFS (Depth-First Search) para la resolución de Frozen Lake.
 
