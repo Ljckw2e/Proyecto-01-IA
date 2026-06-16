@@ -106,7 +106,7 @@ export default function FrozenLakeViz() {
   return (
     <div style={{ 
       display: "flex", 
-      flexDirection: "column", // ✨ Contenedor principal en formato vertical (fila arriba, tabla abajo)
+      flexDirection: "column",
       gap: "24px", 
       width: "100%",
       maxWidth: "1400px", 
@@ -117,7 +117,7 @@ export default function FrozenLakeViz() {
       {/* 🏙️ SECCIÓN SUPERIOR: CONFIGURACIÓN + TABLERO INTERACTIVO */}
       <div style={{ display: "flex", gap: "30px", width: "100%", alignItems: "flex-start" }}>
         
-        {/* 📋 COLUMNA 1: CONFIGURACIÓN */}
+        {/*COLUMNA 1: CONFIGURACIÓN */}
         <div style={{ 
           width: "300px", 
           background: "#ffffff", 
@@ -160,8 +160,16 @@ export default function FrozenLakeViz() {
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.5px" }}>DIMENSIONES</span>
             <div style={{ display: "flex", gap: "10px" }}>
-              <label style={{ fontSize: "13px", color: "#1e293b", flex: 1 }}>Filas: <input type="number" min="3" max="8" value={rows} onChange={(e) => setRows(Number(e.target.value))} style={{ width: "100%", padding: "8px", marginTop: "4px", borderRadius: "6px", border: "1px solid #cbd5e1" }} disabled={!isEditing} /></label>
-              <label style={{ fontSize: "13px", color: "#1e293b", flex: 1 }}>Columnas: <input type="number" min="3" max="8" value={cols} onChange={(e) => setCols(Number(e.target.value))} style={{ width: "100%", padding: "8px", marginTop: "4px", borderRadius: "6px", border: "1px solid #cbd5e1" }} disabled={!isEditing} /></label>
+              <label style={{ fontSize: "13px", color: "#1e293b", flex: 1 }}>
+                Filas: <input type="number" min="3" max="8" value={rows} onChange={(e) => setRows(Number(e.target.value))}
+                style={{ width: "100%", padding: "8px", marginTop: "4px", borderRadius: "6px", border: "1px solid #cbd5e1"}}
+                disabled={!isEditing} />
+                </label>
+              <label style={{ fontSize: "13px", color: "#1e293b", flex: 1 }}>
+                Columnas: <input type="number" min="3" max="8" value={cols} onChange={(e) => setCols(Number(e.target.value))}
+                style={{ width: "100%", padding: "8px", marginTop: "4px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                disabled={!isEditing} />
+                </label>
             </div>
           </div>
 

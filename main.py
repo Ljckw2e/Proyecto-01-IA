@@ -172,7 +172,6 @@ def resolver_sokoban_astar(grid, rows, cols):
 # =====================================================================
 # MÓDULO 3: BÚSQUEDA LOCAL — N REINAS (HILL CLIMBING REAL)
 # =====================================================================
-# Modifica la sección de las reinas en tu main.py para dejarlo así:
 
 class QueensConfig(BaseModel):
     num_queens: int

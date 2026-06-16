@@ -1,0 +1,20 @@
+---
+import Layout from '../../layouts/Layout.astro';
+// Como Sokoban.astro y SokobanViz.jsx están en la misma carpeta "Tableros",
+// la ruta relativa es simplemente un punto y una diagonal "./"
+import SokobanViz from './SokobanViz.jsx';
+---
+
+<Layout title="Simulador: Sokoban">
+  <main style="padding: 40px 20px; background-color: #f8fafc; min-height: 100vh;">
+    
+    <div style="margin-bottom: 30px; text-align: center;">
+      <h1 style="color: #1e293b; margin: 0; font-size: 28px;">Búsqueda Informada</h1>
+      <p style="color: #64748b; margin: 5px 0 0 0;">Resolución y ejecución de Sokoban</p>
+    </div>
+
+    {/* Cargamos el componente interactivo de las cajas */}
+    <SokobanViz client:load />
+
+  </main>
+</Layout>

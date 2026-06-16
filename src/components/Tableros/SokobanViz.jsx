@@ -228,7 +228,7 @@ export default function SokobanViz() {
                     transition: "all 0.2s"
                   }}
                 >
-                  Reto {num}
+                  Nivel {num}
                 </button>
               ))}
             </div>
