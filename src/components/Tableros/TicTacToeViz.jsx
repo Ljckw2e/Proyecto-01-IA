@@ -116,15 +116,15 @@ export default function TicTacToeViz() {
 
   const interpretarPensamiento = (movimiento, puntuaciones) => {
     const valorElegido = puntuaciones[movimiento];
-    let explicacion = `Computo de Funcion de Utilidad:\n`;
+    let explicacion = `Decisiones de la IA:\n`;
     explicacion += `MAX (O) selecciono la casilla C_${movimiento} aplicando un criterio de maximizacion pura con v = (${valorElegido}).\n\n`;
     
     if (valorElegido > 0) {
-      explicacion += `-> Diagnostico: Estrategia de Maximizacion. MAX detecto un camino libre hacia un nodo terminal ganador (+10).`;
+      explicacion += `-> Diagnostico: Estrategia de MAXIMIZACIÓN. MAX detecto un camino libre para ganar (+10).`;
     } else if (valorElegido < 0) {
-      explicacion += `-> Diagnostico: Contencion defensiva. MIN forzo la reduccion de la utilidad general, obligando a MAX a mitigar danos.`;
+      explicacion += `-> Diagnostico: DEFENSA. MIN forzo la reduccion de la utilidad.`;
     } else {
-      explicacion += `-> Diagnostico: Equilibrio perfecto. Ambos agentes juegan con racionalidad perfecta (v = 0).`;
+      explicacion += `-> Diagnostico: EQUILIBRIO. Ambos agentes juegan sin ningún camino ganador (v = 0).`;
     }
     setIaThinking(explicacion);
   };
@@ -278,7 +278,7 @@ export default function TicTacToeViz() {
         {/* TABLERO */}
         <div style={{ flex: "1", minWidth: "320px", background: "#ffffff", padding: "20px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
           <div style={{ fontWeight: "bold", color: "#1e293b", fontSize: "14px" }}>
-            {winner ? "Prueba Terminal Detectada" : `Horizonte Actual: Decision de ${turn}`}
+            {winner ? "Prueba Terminal Detectada" : `Turno de ${turn}`}
           </div>
 
           <div style={{
@@ -353,7 +353,7 @@ export default function TicTacToeViz() {
       {/* ÁRBOL DE DECISIONES CRONOLÓGICO CRECIENTE */}
       <div style={{ width: "100%", background: "#ffffff", padding: "24px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", gap: "16px" }}>
         <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>
-          Arbol de Juego (Raices Historicas Permanente)
+          Arbol de Juego 
         </div>
         
         <div style={{ display: "flex", flexDirection: "column", gap: "20px", background: "#f8fafc", padding: "20px", borderRadius: "12px", border: "1px solid #e2e8f0", overflowX: "auto" }}>

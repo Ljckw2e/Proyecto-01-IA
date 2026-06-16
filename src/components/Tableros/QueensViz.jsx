@@ -232,7 +232,7 @@ export default function QueensViz() {
 
           {/* BITÁCORA DE CAMBIOS */}
           <div style={{ display: "flex", flexDirection: "column", flex: "1" }}>
-            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", marginBottom: "4px", textTransform: "uppercase" }}>Bitácora Secuencial de Cambios</span>
+            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", marginBottom: "4px", textTransform: "uppercase" }}>Secuencia de Cambios</span>
             <div style={{ background: "#ffffff", padding: "14px 16px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", maxHeight: "180px", overflowY: "auto", fontFamily: "monospace", fontSize: "12px", display: "flex", flexDirection: "column", gap: "6px" }}>
               {!isEditing && discoveredSteps.length > 0 ? (
                 discoveredSteps.map((s, idx) => {
@@ -265,7 +265,7 @@ export default function QueensViz() {
           
           {/* GRÁFICA HEURÍSTICA */}
           <div style={{ width: "100%", background: "#ffffff", padding: "24px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}>
-            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>Comportamiento Heurístico (Descenso de Conflictos)</span>
+            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>Descenso de Conflicto</span>
             <div style={{ display: "flex", alignItems: "flex-end", height: "140px", gap: "6px", background: "#f8fafc", padding: "20px 15px 15px 15px", borderRadius: "12px", border: "1px solid #e2e8f0", marginTop: "8px" }}>
               {data.steps.map((s, idx) => {
                 const isRevealed = idx <= stepIdx;
@@ -290,7 +290,7 @@ export default function QueensViz() {
 
           {/* TABLA DE AUDITORÍA INTEGRAL IMPRESA */}
           <div style={{ width: "100%", background: "#ffffff", padding: "24px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", gap: "14px" }}>
-            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>Registro de Tránsito en Tiempo Real (Matriz de Solución)</span>
+            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>Matriz de Solución</span>
             <div style={{ borderRadius: "8px", border: "1px solid #e2e8f0" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
                 <thead>
