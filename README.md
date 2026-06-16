@@ -20,6 +20,11 @@ Este es el repositorio del proyecto final de la materia de Inteligencia Artifici
 
 Para simplificar el despliegue del entorno y evitar la ejecución manual de múltiples terminales, el proyecto cuenta con un script de automatización para Windows (.bat).
 
+Especifica las versiones de software con las que garantizas que tu proyecto funciona perfectamente:
+* **Node.js:** Versión v18 o superior.
+* **Python:** Versión 3.10 o superior.
+* **Navegador:** Optimizado para Google Chrome o Microsoft Edge.
+
 * Tener instalado Node.js y las dependencias de Astro (npm install).
 * Tener instalado Python junto con el servidor de la API (pip install fastapi uvicorn o las dependencias de tu proyecto).
 
@@ -46,7 +51,17 @@ ORBITAL-ORBIT/
 ├── 📄 main.py                 <-- API Backend (FastAPI / Flask)
 ├── 📄 package.json            <-- Configuración de Astro
 └── 📄 README.md
+```
+---
 
+## 👤 Autores y Créditos
+
+Sección para poner tus datos académicos:
+* **Alumnos:** Jairo Andrey Arrollo García
+               Laila Jocelyn Rodríguez Martínez
+* **Institución:** Instituto Politécnico Nacional. Escuela Superior de Cómputo.
+* **Asignatura:** Inteligencia Artificial
+* **Grupo:** 6CM1
 
 ## Documentación de ASTRO
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
