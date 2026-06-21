@@ -59,8 +59,9 @@ ORBITAL-ORBIT/
 ## 👤 Autores y Créditos
 
 Sección para poner tus datos académicos:
-* **Alumnos:** Jairo Andrey Arrollo García
-               
+* **Alumnos:** 
+               Baran Quiroz Jose David
+               Jairo Andrey Arrollo García
                Laila Jocelyn Rodríguez Martínez
 * **Institución:** Instituto Politécnico Nacional.
 
