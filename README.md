@@ -61,7 +61,7 @@ ORBITAL-ORBIT/
 Sección para poner tus datos académicos:
 * **Alumnos:** 
 ```text
-Arrollo García Jairo Andrey
+Arroyo García Jairo Andrey
 Baran Quiroz Jose David
 Rodríguez Martínez Laila Jocelyn
 ```
