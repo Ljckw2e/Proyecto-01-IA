@@ -1,6 +1,6 @@
 # Proyecto Final - Algoritmos de busqueda 🚀
 
-Este es el repositorio del proyecto final de la materia de Inteligencia Artificial. Esta es una plataforma web asíncrona que permite vizualisar los diferentes algoritmos de busqueda. El proyecto está construido utilizando **Astro**  e integrado con **React** para componentes interactivos y dinámicos.
+Este es el repositorio del proyecto final de la materia de Inteligencia Artificial. Esta es una plataforma web asíncrona que permite visualizar los diferentes algoritmos de búsqueda. El proyecto está construido utilizando **Astro**  e integrado con **React** para componentes interactivos y dinámicos.
 
 ---
 
