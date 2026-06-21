@@ -60,9 +60,11 @@ ORBITAL-ORBIT/
 
 Sección para poner tus datos académicos:
 * **Alumnos:** 
+            ```text
                Baran Quiroz Jose David
                Jairo Andrey Arrollo García
                Laila Jocelyn Rodríguez Martínez
+            ```
 * **Institución:** Instituto Politécnico Nacional.
 
                    Escuela Superior de Cómputo.
