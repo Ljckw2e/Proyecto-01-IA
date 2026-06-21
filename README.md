@@ -61,9 +61,9 @@ ORBITAL-ORBIT/
 Sección para poner tus datos académicos:
 * **Alumnos:** 
 ```text
+Arrollo García Jairo Andrey
 Baran Quiroz Jose David
-Jairo Andrey Arrollo García
-Laila Jocelyn Rodríguez Martínez
+Rodríguez Martínez Laila Jocelyn
 ```
 * **Institución:** Instituto Politécnico Nacional.
 
