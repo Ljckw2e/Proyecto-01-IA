@@ -32,7 +32,7 @@ export default function FrozenLakeViz() {
   const [loading, setLoading] = useState(false);
 
   const intervalRef = useRef(null);
-  // ✨ Referencia para el auto-scroll vertical del contenedor de la tabla
+  // Auto-scroll vertical del contenedor de la tabla
   const tableContainerRef = useRef(null); 
   const totalSteps = data?.steps?.length ?? 0;
 

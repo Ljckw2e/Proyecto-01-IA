@@ -86,6 +86,60 @@ def resolver_bfs_real(grid, rows, cols):
         if steps_history: steps_history[-1]["message"] = "No existe un camino posible."
     return steps_history
 
+def resolver_dfs_real(grid, rows, cols):
+    start_flat, goal_flat = 0, (rows * cols) - 1
+    for r in range(rows):
+        for c in range(cols):
+            if grid[r][c] == 'S': start_flat = r * cols + c
+            if grid[r][c] == 'G': goal_flat = r * cols + c
+
+    queue = deque([start_flat])
+    parent = {start_flat: None}
+    visited_set = set([start_flat])
+    steps_history = []
+    step_counter = 1
+    found = False
+
+    while queue:
+        current = queue.pop()
+        curr_r, curr_c = current // cols, current % cols
+        steps_history.append({
+            "step": step_counter,
+            "current": current,
+            "frontier": list(queue),
+            "visited": list(visited_set),
+            "message": f"Evaluando celda [{curr_r},{curr_c}]",
+            "found": False
+        })
+        step_counter += 1
+
+        if current == goal_flat:
+            found = True
+            break
+
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nr, nc = curr_r + dr, curr_c + dc
+            if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] != 'H':
+                neighbor_flat = nr * cols + nc
+                if neighbor_flat not in visited_set:
+                    visited_set.add(neighbor_flat)
+                    parent[neighbor_flat] = current
+                    queue.append(neighbor_flat)
+
+    if found:
+        path = []
+        curr = goal_flat
+        while curr is not None:
+            path.append(curr)
+            curr = parent[curr]
+        path.reverse()
+        steps_history[-1]["found"] = True
+        steps_history[-1]["solution_path"] = path
+        steps_history[-1]["message"] = "¡Meta encontrada! Trazando camino óptimo."
+    else:
+        if steps_history: steps_history[-1]["message"] = "No existe un camino posible."
+    return steps_history
+
 # =====================================================================
 # MÓDULO 2: SOKOBAN (A*)
 # =====================================================================
