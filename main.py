@@ -350,8 +350,10 @@ def minimax_gato(b, depth, is_max):
 # =====================================================================
 @app.post("/api/search")
 def buscar_algoritmo(config: GridConfig):
-    if config.algorithm in ['bfs', 'dfs']:
+    if config.algorithm == 'bfs':
         steps = resolver_bfs_real(config.grid, config.rows, config.cols)
+    elif config.algorithm == 'dfs':
+        steps = resolver_dfs_real(config.grid, config.rows, config.cols) # <--- Ahora sí llama a tu nueva función
     elif config.algorithm in ['astar', 'greedy']:
         steps = resolver_sokoban_astar(config.grid, config.rows, config.cols)
     else:
