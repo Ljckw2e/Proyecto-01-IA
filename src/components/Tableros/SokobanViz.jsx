@@ -288,7 +288,7 @@ export default function SokobanViz() {
             {gridMap.flat().map((cell, pos) => {
               const r = Math.floor(pos / cols), c = pos % cols;
               
-              // El suelo por defecto toma el color arenoso/beige de la captura
+              // El suelo por defecto toma el color arenoso/beige
               let cellBg = "#e2e4d4"; 
               if (cell === 'W') cellBg = "#475569"; 
 
