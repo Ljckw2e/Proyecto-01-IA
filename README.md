@@ -26,7 +26,7 @@ Especifica las versiones de software con las que garantizas que tu proyecto func
 * **Navegador:** Optimizado para Google Chrome o Microsoft Edge.
 
 * Tener instalado Node.js y las dependencias de Astro (npm install).
-* Tener instalado Python junto con el servidor de la API (pip install fastapi uvicorn o las dependencias de tu proyecto).
+* Tener instalado Python junto con el servidor de la API (pip install fastapi uvicorn).
 
 ## Instrucciones de Ejecución
 * Localiza el archivo iniciar_proyecto.bat en la raíz del proyecto.
