@@ -224,7 +224,7 @@ def resolver_sokoban_astar(grid, rows, cols):
     return steps_history
 
 # =====================================================================
-# MÓDULO 3: BÚSQUEDA LOCAL — N REINAS (HILL CLIMBING REAL)
+# MÓDULO 3: BÚSQUEDA LOCAL — N REINAS
 # =====================================================================
 
 class QueensConfig(BaseModel):
@@ -253,21 +253,28 @@ def resolver_queens_pure_hc(n, estado_inicial):
     steps_history = []
     step_counter = 0
     
+    # Paso 0: Carga inicial
     steps_history.append({
         "step": step_counter,
-        "state": list(current_state),
+        "estado_previo": list(current_state),
+        "vecino_evaluado": list(current_state),
+        "mejor_vecino": list(current_state),
+        "state": list(current_state), 
         "attacks": current_attacks,
         "conflicts": en_conflicto,
         "chosen_column": -1,
+        "decision": "Carga inicial del tablero",
         "message": f"Configuración inicial cargada con {current_attacks} conflictos."
     })
 
     max_steps = 40
     
     while step_counter < max_steps and current_attacks > 0:
+        estado_antes_de_ronda = list(current_state) 
         best_neighbor = list(current_state)
         best_attacks = current_attacks
         chosen_col = -1
+        ultimo_vecino_probado = list(current_state)
         
         # Evaluar todo el vecindario completo
         for col in range(n):
@@ -279,6 +286,8 @@ def resolver_queens_pure_hc(n, estado_inicial):
                 vecino[col] = row
                 vecino_attacks, _ = obtener_conflictos_reinas(vecino)
                 
+                ultimo_vecino_probado = list(vecino) 
+                
                 if vecino_attacks < best_attacks:
                     best_attacks = vecino_attacks
                     best_neighbor = vecino
@@ -288,12 +297,20 @@ def resolver_queens_pure_hc(n, estado_inicial):
         if best_attacks >= current_attacks:
             step_counter += 1
             steps_history.append({
-                "step": step_counter, "state": list(current_state), "attacks": current_attacks,
-                "conflicts": en_conflicto, "chosen_column": -1,
+                "step": step_counter, 
+                "estado_previo": estado_antes_de_ronda,
+                "vecino_evaluado": ultimo_vecino_probado,
+                "mejor_vecino": estado_antes_de_ronda, 
+                "state": list(current_state),
+                "attacks": current_attacks,
+                "conflicts": en_conflicto, 
+                "chosen_column": -1,
+                "decision": "TERMINAR: Bloqueo en Máximo Local",
                 "message": "Fin de la búsqueda: Se alcanzó un Máximo Local."
             })
             break
             
+        # Si hay mejora, ejecutamos la transición
         current_state = best_neighbor
         current_attacks = best_attacks
         _, en_conflicto = obtener_conflictos_reinas(current_state)
@@ -301,17 +318,18 @@ def resolver_queens_pure_hc(n, estado_inicial):
         
         steps_history.append({
             "step": step_counter,
+            "estado_previo": estado_antes_de_ronda,
+            "vecino_evaluado": ultimo_vecino_probado,
+            "mejor_vecino": list(best_neighbor),
             "state": list(current_state),
             "attacks": current_attacks,
             "conflicts": en_conflicto,
             "chosen_column": chosen_col,
+            "decision": f"MOVER Columna {chosen_col} a Fila {current_state[chosen_col]}",
             "message": f"Optimización: Reina de la columna {chosen_col} movida. Conflictos: {current_attacks}."
         })
 
     return steps_history, current_attacks == 0
-
-
-
 # =====================================================================
 # MÓDULO 4: BÚSQUEDA ADVERSARIA — GATO (MINIMAX)
 # =====================================================================
@@ -347,7 +365,7 @@ def minimax_gato(b, depth, is_max):
 
 # =====================================================================
 # ENDPOINTS CENTRALES DE LA API
-# =====================================================================
+# ==================================================================git ===
 @app.post("/api/search")
 def buscar_algoritmo(config: GridConfig):
     if config.algorithm == 'bfs':

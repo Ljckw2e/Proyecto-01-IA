@@ -9,7 +9,7 @@ export default function QueensViz() {
   
   const [data, setData] = useState(null);
   const [stepIdx, setStepIdx] = useState(-1);
-  const [running, setRunning] = useState(false);
+  const [running, setRunning] = useState(false);  {/* animacion auto */}
   const [speed] = useState(700); 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -69,13 +69,15 @@ export default function QueensViz() {
     };
   }, [running, speed, totalSteps]);
 
-  const handleTileClick = (row, col) => {
+  {/* Colocar nuevas reinas */}
+  const handleTileClick = (row, col) => { 
     if (!isEditing) return;
     const nuevoEstado = [...userState];
     nuevoEstado[col] = nuevoEstado[col] === row ? -1 : row;
     setUserState(nuevoEstado);
   };
 
+  {/* verificacion */}
   const handleCalculate = async () => {
     if (queensPlaced < numQueens) {
       setError(`Se requiere posicionar las ${numQueens} unidades antes de proceder con la ejecución.`);
@@ -288,17 +290,19 @@ export default function QueensViz() {
             </div>
           </div>
 
-          {/* TABLA DE AUDITORÍA INTEGRAL IMPRESA */}
+          {/* TABLA DE AUDITORÍA INTEGRAL IMPRESA Y ENRIQUECIDA */}
           <div style={{ width: "100%", background: "#ffffff", padding: "24px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", gap: "14px" }}>
-            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>Matriz de Solución</span>
-            <div style={{ borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+            <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>Matriz de Solución y Auditoría del Vecindario</span>
+            <div style={{ borderRadius: "8px", border: "1px solid #e2e8f0", overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", minWidth: "800px" }}>
                 <thead>
                   <tr style={{ background: "#f8fafc", borderBottom: "2px solid #e2e8f0" }}>
-                    <th style={{ padding: "12px 16px", width: "120px", textAlign: "left", color: "#475569" }}>Identificador</th>
-                    <th style={{ padding: "12px 16px", width: "160px", textAlign: "left", color: "#475569" }}>Modificación</th>
-                    <th style={{ padding: "12px 16px", textAlign: "left", color: "#475569" }}>Vector de Estado [Y]</th>
-                    <th style={{ padding: "12px 16px", width: "120px", textAlign: "center", color: "#475569" }}>Conflictos (F)</th>
+                    <th style={{ padding: "12px 12px", width: "90px", textAlign: "left", color: "#475569" }}>Identificador</th>
+                    <th style={{ padding: "12px 12px", textAlign: "left", color: "#475569" }}>Estado Actual</th>
+                    <th style={{ padding: "12px 12px", textAlign: "left", color: "#475569" }}>Vecino Evaluado</th>
+                    <th style={{ padding: "12px 12px", textAlign: "left", color: "#475569" }}>Mejor Vecino</th>
+                    <th style={{ padding: "12px 12px", width: "180px", textAlign: "left", color: "#475569" }}>Decisión Tomada</th>
+                    <th style={{ padding: "12px 12px", width: "90px", textAlign: "center", color: "#475569" }}>Conflictos</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -306,10 +310,38 @@ export default function QueensViz() {
                     const esUltimo = i === discoveredSteps.length - 1;
                     return (
                       <tr key={i} style={{ borderBottom: "1px solid #f1f5f9", background: esUltimo ? "#EEEDFE" : "transparent", color: esUltimo ? "#534AB7" : "#334155", fontWeight: esUltimo ? "600" : "400", transition: "all 0.15s" }}>
-                        <td style={{ padding: "10px 16px", fontFamily: "monospace" }}>STEP_{String(s.step).padStart(3, '0')}</td>
-                        <td style={{ padding: "10px 16px" }}>{s.chosen_column === -1 ? "Escenario Inicial" : `Mover Columna ${s.chosen_column}`}</td>
-                        <td style={{ padding: "10px 16px", fontFamily: "monospace", letterSpacing: "0.5px" }}>[{s.state.join(", ")}]</td>
-                        <td style={{ padding: "10px 16px", textAlign: "center", fontWeight: "bold", color: s.attacks === 0 ? "#10b981" : esUltimo ? "#534AB7" : "#475569" }}>{s.attacks}</td>
+                        <td style={{ padding: "10px 12px", fontFamily: "monospace" }}>STEP_{String(s.step).padStart(3, '0')}</td>
+                        
+                        {/* Estado Actual */}
+                        <td style={{ padding: "10px 12px", fontFamily: "monospace", color: "#475569" }}>
+                          [{s.estado_previo ? s.estado_previo.join(", ") : s.state.join(", ")}]
+                        </td>
+                        
+                        {/* Vecino Evaluado */}
+                        <td style={{ padding: "10px 12px", fontFamily: "monospace", color: "#64748b", fontStyle: "italic" }}>
+                          [{s.vecino_evaluado ? s.vecino_evaluado.join(", ") : "—"}]
+                        </td>
+                        
+                        {/* Mejor Vecino */}
+                        <td style={{ padding: "10px 12px", fontFamily: "monospace", color: "#0f172a" }}>
+                          [{s.mejor_vecino ? s.mejor_vecino.join(", ") : s.state.join(", ")}]
+                        </td>
+                        
+                        {/* Decisión */}
+                        <td style={{ padding: "10px 12px", fontWeight: "600" }}>
+                          <span style={{
+                            padding: "3px 8px", borderRadius: "12px", fontSize: "11px",
+                            background: s.decision?.includes("MOVER") ? "#E0F2FE" : s.decision?.includes("TERMINAR") ? "#FEE2E2" : "#F1F5F9",
+                            color: s.decision?.includes("MOVER") ? "#0369A1" : s.decision?.includes("TERMINAR") ? "#991b1b" : "#475569"
+                          }}>
+                            {s.decision ?? (s.chosen_column === -1 ? "Inicialización" : "Optimizar")}
+                          </span>
+                        </td>
+                        
+                        {/* Conflictos */}
+                        <td style={{ padding: "10px 12px", textAlign: "center", fontWeight: "bold", color: s.attacks === 0 ? "#10b981" : esUltimo ? "#534AB7" : "#ef4444" }}>
+                          {s.attacks}
+                        </td>
                       </tr>
                     );
                   })}
